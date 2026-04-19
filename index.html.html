@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="名片掃描">
+<title>名片掃描 → Notion</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: #0F0F13;
+    color: #F0F0F5;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* Header */
+  .header {
+    background: #0F0F13;
+    padding: 56px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 0.5px solid #1E1E28;
+  }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { font-size: 13px; color: #666680; margin-top: 3px; }
+
+  /* Sections */
+  .section {
+    margin: 16px 16px 0;
+    background: #17171F;
+    border-radius: 16px;
+    border: 0.5px solid #1E1E2E;
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 14px 16px 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: #5A5A80;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .section-body { padding: 12px 16px 16px; }
+
+  /* Fields */
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+  .field input, .field textarea, .field select {
+    width: 100%; background: #0F0F13; border: 0.5px solid #2A2A3A;
+    border-radius: 10px; padding: 11px 13px; font-size: 15px; color: #F0F0F5;
+    font-family: inherit; -webkit-appearance: none; appearance: none;
+  }
+  .field input:focus, .field textarea:focus {
+    outline: none; border-color: #6366F1;
+    background: #12121A;
+  }
+  .field textarea { resize: none; line-height: 1.5; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .row2 .field { margin-bottom: 0; }
+
+  /* Token input */
+  .token-wrap { display: flex; gap: 8px; }
+  .token-wrap input { flex: 1; }
+  .btn-ghost {
+    background: #1E1E2E; border: 0.5px solid #2A2A3A; border-radius: 10px;
+    color: #888; font-size: 13px; padding: 0 14px; cursor: pointer;
+    white-space: nowrap; font-family: inherit;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 1.5px dashed #2A2A3A; border-radius: 14px; padding: 28px 20px;
+    text-align: center; cursor: pointer; display: block; transition: background .15s;
+    position: relative; overflow: hidden;
+  }
+  .upload-zone:active { background: #1E1E2E; }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-zone .icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-zone p { font-size: 14px; color: #666680; }
+  .upload-zone small { font-size: 12px; color: #444460; margin-top: 4px; display: block; }
+  #preview-img {
+    width: 100%; max-height: 200px; object-fit: contain;
+    border-radius: 10px; margin-top: 12px; display: none;
+  }
+
+  /* Country pills */
+  .country-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .cpill {
+    padding: 7px 15px; border-radius: 20px; font-size: 14px;
+    border: 0.5px solid #2A2A3A; background: #0F0F13; cursor: pointer;
+    color: #AAAACC; font-family: inherit; transition: all .15s;
+  }
+  .cpill.active {
+    border-color: #6366F1; background: #1E1B4B; color: #A5B4FC;
+  }
+  .db-hint {
+    font-size: 11px; color: #5A5A80; margin-top: 8px;
+    font-family: monospace; display: none;
+  }
+
+  /* Buttons */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 15px; border-radius: 14px; font-size: 16px;
+    font-weight: 600; cursor: pointer; border: none; font-family: inherit;
+    transition: all .15s; -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: #6366F1; color: #fff; }
+  .btn-primary:disabled { background: #2A2A4A; color: #5A5A80; cursor: not-allowed; transform: none; }
+  .btn-secondary { background: #1E1E2E; color: #AAAACC; border: 0.5px solid #2A2A3A; }
+  .btn-save { background: #059669; color: #fff; }
+  .btn-save:disabled { background: #1A3A2A; color: #3A7A5A; cursor: not-allowed; transform: none; }
+  .btn-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .btn-small { width: auto; padding: 15px 20px; }
+
+  /* Status */
+  .status {
+    border-radius: 10px; padding: 11px 14px; font-size: 14px; margin-top: 10px;
+    display: none; line-height: 1.4;
+  }
+  .status.show { display: block; }
+  .status.ok { background: #052E1A; color: #34D399; border: 0.5px solid #064E2A; }
+  .status.err { background: #2E0505; color: #F87171; border: 0.5px solid #4E0606; }
+  .status.info { background: #050D2E; color: #93C5FD; border: 0.5px solid #062050; }
+
+  /* Spinner */
+  .spinner {
+    width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.2);
+    border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite;
+    display: inline-block; flex-shrink: 0;
+  }
+  .spinner.green { border-color: rgba(52,211,153,.2); border-top-color: #34D399; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Divider */
+  hr { border: none; border-top: 0.5px solid #1E1E2E; margin: 14px 0; }
+
+  /* Test connection */
+  .conn-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+  .conn-status { font-size: 13px; color: #666680; }
+
+  /* Settings toggle */
+  .settings-toggle {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; cursor: pointer;
+  }
+  .settings-toggle span { font-size: 14px; color: #AAAACC; }
+  .settings-toggle .arrow { font-size: 12px; color: #5A5A80; transition: transform .2s; }
+  .settings-toggle .arrow.open { transform: rotate(180deg); }
+  .settings-body { padding: 0 16px 16px; }
+  .settings-body.hidden { display: none; }
+
+  /* Success overlay */
+  .success-toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #059669; color: #fff; padding: 14px 24px; border-radius: 14px;
+    font-size: 15px; font-weight: 600; z-index: 999;
+    box-shadow: 0 8px 32px rgba(5,150,105,.4);
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+    white-space: nowrap;
+  }
+  .success-toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>名片掃描</h1>
+  <p>拍照 → AI辨識 → 自動存入 Notion</p>
+</div>
+
+<!-- Settings -->
+<div class="section">
+  <div class="settings-toggle" onclick="toggleSettings()">
+    <span>⚙️ &nbsp;Notion 設定</span>
+    <span class="arrow" id="arrow">▼</span>
+  </div>
+  <div class="settings-body" id="settings-body">
+    <div class="field">
+      <label>Integration Token</label>
+      <div class="token-wrap">
+        <input type="password" id="token" placeholder="secret_xxxxxxxxxxxx" />
+        <button class="btn-ghost" onclick="toggleToken()">顯示</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Proxy Worker URL</label>
+      <input type="text" id="proxy" value="https://notion-proxy.shaucici0910.workers.dev" />
+    </div>
+    <div class="conn-row">
+      <button class="btn-ghost" style="padding:9px 16px;font-size:14px" onclick="testConn()">測試連線</button>
+      <span class="conn-status" id="conn-st"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Scan -->
+<div class="section" style="margin-top:16px">
+  <div class="section-header">掃描名片</div>
+  <div class="section-body">
+    <label class="upload-zone" id="zone">
+      <input type="file" accept="image/*" capture="environment" id="file-input" onchange="onFile(this)" />
+      <div class="icon" id="zone-icon">📷</div>
+      <p id="zone-text">點擊拍照或選取名片圖片</p>
+      <small id="zone-sub">支援 JPG、PNG、HEIC</small>
+      <img id="preview-img" />
+    </label>
+
+    <div style="margin-top:12px" class="btn-row">
+      <button class="btn btn-primary" id="scan-btn" onclick="scanCard()" disabled>
+        <span id="scan-lbl">AI 辨識名片</span>
+      </button>
+      <button class="btn btn-secondary btn-small" onclick="clearAll()">清除</button>
+    </div>
+    <div class="status" id="scan-st"></div>
+  </div>
+</div>
+
+<!-- Result Fields -->
+<div class="section" id="result-section" style="display:none;margin-top:16px">
+  <div class="section-header">辨識結果</div>
+  <div class="section-body">
+    <div class="row2">
+      <div class="field"><label>姓名</label><input type="text" id="f-name" /></div>
+      <div class="field"><label>職稱</label><input type="text" id="f-title" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>公司</label><input type="text" id="f-company" /></div>
+      <div class="field"><label>電話</label><input type="tel" id="f-phone" /></div>
+    </div>
+    <div class="field"><label>Email</label><input type="email" id="f-email" /></div>
+    <div class="field">
+      <label>備註（認識場合、跟進事項）</label>
+      <textarea id="f-notes" rows="3"></textarea>
+    </div>
+
+    <hr>
+
+    <div class="field">
+      <label>國家 — 自動存入對應 Notion Database</label>
+      <div class="country-row">
+        <button class="cpill" data-c="Malaysia" onclick="pickC('Malaysia')">🇲🇾 Malaysia</button>
+        <button class="cpill" data-c="Thailand" onclick="pickC('Thailand')">🇹🇭 Thailand</button>
+        <button class="cpill" data-c="Vietnam" onclick="pickC('Vietnam')">🇻🇳 Vietnam</button>
+        <button class="cpill" data-c="Others" onclick="pickC('Others')">🌐 Others</button>
+      </div>
+      <div class="db-hint" id="db-hint"></div>
+    </div>
+
+    <hr>
+
+    <button class="btn btn-save" id="save-btn" onclick="saveNotion()">
+      <span id="save-lbl">存入 Notion</span>
+    </button>
+    <div class="status" id="save-st"></div>
+  </div>
+</div>
+
+<div class="success-toast" id="toast">✓ 已成功存入 Notion！</div>
+
+<script>
+const DBS = {
+  Malaysia: "345c06889e29801aadcdff21dffb0e04",
+  Thailand: "345c06889e2980a6b8ccd188d753896f",
+  Vietnam:  "345c06889e2980b4b297e4952bc1838d",
+  Others:   "345c06889e2980ef860cfa0d55fe587a"
+};
+
+let imgB64 = null, imgType = "image/jpeg", selectedCountry = null;
+let settingsOpen = true;
+
+// Persist token & proxy
+window.addEventListener('load', () => {
+  const t = localStorage.getItem('notion_token');
+  const p = localStorage.getItem('proxy_url');
+  if (t) document.getElementById('token').value = t;
+  if (p) document.getElementById('proxy').value = p;
+});
+document.getElementById('token').addEventListener('change', e => localStorage.setItem('notion_token', e.target.value));
+document.getElementById('proxy').addEventListener('change', e => localStorage.setItem('proxy_url', e.target.value));
+
+function toggleSettings() {
+  settingsOpen = !settingsOpen;
+  document.getElementById('settings-body').classList.toggle('hidden', !settingsOpen);
+  document.getElementById('arrow').classList.toggle('open', settingsOpen);
+}
+
+function toggleToken() {
+  const el = document.getElementById('token');
+  el.type = el.type === 'password' ? 'text' : 'password';
+  event.target.textContent = el.type === 'password' ? '顯示' : '隱藏';
+}
+
+async function testConn() {
+  const proxy = document.getElementById('proxy').value.trim();
+  const st = document.getElementById('conn-st');
+  st.textContent = '測試中...';
+  st.style.color = '#666680';
+  try {
+    const r = await fetch(proxy, { method: 'GET' });
+    const d = await r.json();
+    if (d.error === 'Method not allowed') {
+      st.textContent = '✓ 連線正常';
+      st.style.color = '#34D399';
+    } else {
+      st.textContent = '⚠ 回應異常';
+      st.style.color = '#FBBF24';
+    }
+  } catch {
+    st.textContent = '✗ 無法連線';
+    st.style.color = '#F87171';
+  }
+}
+
+function onFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  imgType = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    imgB64 = e.target.result.split(',')[1];
+    const img = document.getElementById('preview-img');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('zone-icon').style.display = 'none';
+    document.getElementById('zone-text').style.display = 'none';
+    document.getElementById('zone-sub').style.display = 'none';
+    document.getElementById('scan-btn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAll() {
+  imgB64 = null; selectedCountry = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('preview-img').style.display = 'none';
+  document.getElementById('zone-icon').style.display = 'block';
+  document.getElementById('zone-text').style.display = 'block';
+  document.getElementById('zone-sub').style.display = 'block';
+  document.getElementById('scan-btn').disabled = true;
+  document.getElementById('result-section').style.display = 'none';
+  ['f-name','f-title','f-company','f-phone','f-email','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.querySelectorAll('.cpill').forEach(b => b.classList.remove('active'));
+  document.getElementById('db-hint').style.display = 'none';
+  showStatus('scan-st', '', '');
+  showStatus('save-st', '', '');
+}
+
+function pickC(c) {
+  selectedCountry = c;
+  document.querySelectorAll('.cpill').forEach(b => b.classList.toggle('active', b.dataset.c === c));
+  const hint = document.getElementById('db-hint');
+  hint.textContent = '→ Database: ' + DBS[c];
+  hint.style.display = 'block';
+}
+
+function showStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status' + (type ? ' show ' + type : '');
+}
+
+async function scanCard() {
+  if (!imgB64) return;
+  const btn = document.getElementById('scan-btn');
+  const lbl = document.getElementById('scan-lbl');
+  btn.disabled = true;
+  lbl.innerHTML = '<span class="spinner"></span> 辨識中...';
+  showStatus('scan-st', 'AI 正在讀取名片資訊...', 'info');
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 800,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: imgType, data: imgB64 } },
+            { type: "text", text: `Extract all info from this business card. Return ONLY valid JSON, no markdown, no extra text:
+{"name":"","title":"","company":"","phone":"","email":"","country":"","notes":""}
+Rules:
+- country must be one of: Malaysia, Thailand, Vietnam, Others
+- Detect country from: phone prefix (+60=Malaysia, +66=Thailand, +84=Vietnam), address language, or company location
+- notes: summarize any other useful info (website, address, social media)
+- If unsure about country, use Others` }
+          ]
+        }]
+      })
+    });
+
+    const d = await res.json();
+    const txt = (d.content || []).map(i => i.text || '').join('');
+    const clean = txt.replace(/```json|```/g, '').trim();
+    const p = JSON.parse(clean);
+
+    document.getElementById('f-name').value = p.name || '';
+    document.getElementById('f-title').value = p.title || '';
+    document.getElementById('f-company').value = p.company || '';
+    document.getElementById('f-phone').value = p.phone || '';
+    document.getElementById('f-email').value = p.email || '';
+    document.getElementById('f-notes').value = p.notes || '';
+    if (p.country && DBS[p.country]) pickC(p.country);
+
+    document.getElementById('result-section').style.display = 'block';
+    document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showStatus('scan-st', '✓ 辨識完成！請確認資料後存入 Notion', 'ok');
+  } catch (e) {
+    showStatus('scan-st', '辨識失敗：' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    lbl.textContent = 'AI 辨識名片';
+  }
+}
+
+async function saveNotion() {
+  const token = document.getElementById('token').value.trim();
+  const proxy = document.getElementById('proxy').value.trim();
+  if (!token) { showStatus('save-st', '請先填入 Notion Integration Token', 'err'); return; }
+  if (!proxy) { showStatus('save-st', '請填入 Proxy Worker URL', 'err'); return; }
+  if (!selectedCountry) { showStatus('save-st', '請選擇國家', 'err'); return; }
+
+  const btn = document.getElementById('save-btn');
+  const lbl = document.getElementById('save-lbl');
+  btn.disabled = true;
+  lbl.innerHTML = '<span class="spinner green"></span> 儲存中...';
+  showStatus('save-st', '', '');
+
+  const dbId = DBS[selectedCountry];
+  const name = document.getElementById('f-name').value.trim() || '(未知)';
+  const email = document.getElementById('f-email').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+
+  const props = {
+    "Name": { title: [{ text: { content: name } }] },
+    "Company": { rich_text: [{ text: { content: document.getElementById('f-company').value.trim() } }] },
+    "Country": { select: { name: selectedCountry } },
+    "Notes": { rich_text: [{ text: { content: document.getElementById('f-notes').value.trim() } }] },
+    "Scanned Date": { date: { start: new Date().toISOString().split('T')[0] } }
+  };
+  if (email) props["Email"] = { email };
+  if (phone) props["Phone"] = { phone_number: phone };
+
+  try {
+    const res = await fetch(proxy, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        notion_token: token,
+        notion_endpoint: "https://api.notion.com/v1/pages",
+        payload: { parent: { database_id: dbId }, properties: props }
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.id) {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+      setTimeout(clearAll, 2000);
+    } else {
+      showStatus('save-st', '錯誤：' + (data.message || data.error || JSON.stringify(data)), 'err');
+    }
+  } catch (e) {
+    showStatus('save-st', '連線失敗：' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    lbl.textContent = '存入 Notion';
+  }
+}
+</script>
+</body>
+</html>
