@@ -715,15 +715,31 @@ function handleDrop(e) {
 }
 function processFile(file) {
   if (!file) return;
-  currentImageType = file.type || 'image/jpeg';
+  currentImageType = 'image/jpeg';
   const reader = new FileReader();
   reader.onload = ev => {
-    const b64 = ev.target.result.split(',')[1];
-    currentImageBase64 = b64;
-    document.getElementById('preview-img').src = ev.target.result;
-    document.getElementById('img-preview').style.display = 'block';
-    document.getElementById('result-card').style.display = 'none';
-    scanWithAI(b64);
+    const img = new Image();
+    img.onload = () => {
+      // Resize to max 1600px on longest side, compress to JPEG
+      const MAX = 1600;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      // Compress at 0.85 quality
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const b64 = dataUrl.split(',')[1];
+      currentImageBase64 = b64;
+      document.getElementById('preview-img').src = dataUrl;
+      document.getElementById('img-preview').style.display = 'block';
+      document.getElementById('result-card').style.display = 'none';
+      scanWithAI(b64);
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
 }
