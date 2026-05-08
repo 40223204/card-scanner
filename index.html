@@ -534,9 +534,12 @@ function applyLang() {
 function toggleLang() {
   lang = lang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('cv_lang', lang);
+  // Save current filter selections
+  const savedCont = document.getElementById('continent-filter').value;
+  const savedCtr  = document.getElementById('country-filter').value;
   applyLang();
   populateCountrySelect();
-  populateBrowseFilters();
+  populateBrowseFilters(savedCont, savedCtr);
   renderBrowse();
 }
 
@@ -670,24 +673,23 @@ function populateCountrySelect() {
 }
 
 // Populate browse filter — two cascading selects
-function populateBrowseFilters() {
+function populateBrowseFilters(savedCont='', savedCtr='') {
   const contSel = document.getElementById('continent-filter');
-  const ctrSel = document.getElementById('country-filter');
-  // Continent options
-  contSel.innerHTML = `<option value="">${lang==='zh'?'🌏 全部洲':'🌏 All'}</option>`;
+  contSel.innerHTML = `<option value="">${lang==='zh'?'🌏 全部洲':'🌏 All Continents'}</option>`;
   CONTINENTS.forEach(cont => {
     const opt = document.createElement('option');
     opt.value = cont.code;
     opt.textContent = `${cont.flag} ${continentName(cont)}`;
     contSel.appendChild(opt);
   });
-  updateCountryFilter();
+  if (savedCont) contSel.value = savedCont;
+  updateCountryFilter(savedCtr);
 }
 
-function updateCountryFilter() {
+function updateCountryFilter(savedCtr='') {
   const contCode = document.getElementById('continent-filter').value;
   const ctrSel = document.getElementById('country-filter');
-  const prev = ctrSel.value;
+  const prev = savedCtr || ctrSel.value;
   ctrSel.innerHTML = `<option value="">${lang==='zh'?'全部國家':'All Countries'}</option>`;
   const list = contCode ? COUNTRIES.filter(c=>c.continent===contCode) : COUNTRIES;
   list.forEach(c => {
@@ -696,8 +698,7 @@ function updateCountryFilter() {
     opt.textContent = `${c.flag} ${countryName(c)}`;
     ctrSel.appendChild(opt);
   });
-  // Restore if still valid
-  if ([...ctrSel.options].some(o=>o.value===prev)) ctrSel.value = prev;
+  if (prev && [...ctrSel.options].some(o=>o.value===prev)) ctrSel.value = prev;
   renderBrowse();
 }
 
