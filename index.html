@@ -819,7 +819,6 @@ function saveCard() {
     country: document.getElementById('f-country').value || 'OTHER',
     notes: document.getElementById('f-notes').value,
     savedAt: new Date().toISOString(),
-    image: currentImageBase64 || null,
   };
   const cards = getCards();
   cards.unshift(card);
