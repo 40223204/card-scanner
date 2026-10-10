@@ -1,1033 +1,795 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>CardVault · 名片管理系統</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="名片掃描">
+<meta name="theme-color" content="#f6f1ea">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>名片掃描 CardVault</title>
 <style>
-:root {
-  --bg: #0f0f0f;
-  --surface: #181818;
-  --surface2: #222222;
-  --border: #2e2e2e;
-  --border2: #3a3a3a;
-  --text: #f0ede8;
-  --text2: #a09a92;
-  --text3: #5c5652;
-  --accent: #c8a97e;
-  --accent2: #e8c99e;
-  --danger: #d46060;
-  --success: #6db88a;
-  --radius: 12px;
-  --radius-sm: 8px;
+:root{
+  --bg:#f6f1ea; --card:#fffdfa; --line:#ece3d8; --ink:#4a2a14; --ink2:#7d6553; --ink3:#b3a291;
+  --brown:#8f5a2a; --brown-d:#74461f; --tan:#d8b78d; --chip:#f1e7db;
+  --mint:#d6efe5; --mint-i:#2e7a60; --yel:#fbeaa5; --yel-i:#86651a; --rose:#f7ddd6; --rose-i:#a14b3c;
+  --sky:#dce8f5; --sky-i:#3d6488; --lil:#e8e0f4; --lil-i:#6a4f94;
+  --red:#c0492f; --green:#4f9a6e; --sb:env(safe-area-inset-bottom); --st:env(safe-area-inset-top);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; }
-h1, h2, h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:16px;line-height:1.4}
+body{padding-bottom:calc(80px + var(--sb));min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+[hidden]{display:none!important}
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+header.top{position:sticky;top:0;z-index:20;background:rgba(246,241,234,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:calc(var(--st) + 12px) 16px 10px}
+header.top .in{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+header.top h1{font-size:21px;font-weight:800;letter-spacing:.03em}
+header.top small{display:block;font-size:12px;color:var(--ink3);font-weight:500}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font-size:13px;color:var(--ink2)}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+.tab{display:none}.tab.on{display:block}
 
-/* ── Screens ── */
-.screen { display: none; min-height: 100vh; }
-.screen.active { display: flex; flex-direction: column; }
+nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + var(--sb))}
+nav.bottom .in{max-width:560px;margin:0 auto;display:flex}
+nav.bottom button{flex:1;background:none;border:0;padding:5px 0;color:var(--ink3);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+nav.bottom button.on{color:var(--brown)}
+nav.bottom .bd{position:absolute;top:0;left:calc(50% + 6px);background:var(--red);color:#fff;font-size:10px;min-width:17px;height:17px;border-radius:9px;padding:0 4px;line-height:17px}
 
-/* ══════════════ TOPBAR ══════════════ */
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background: var(--surface);
-  border-bottom: 0.5px solid var(--border);
-  position: sticky; top: 0; z-index: 100;
-}
-.topbar-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--accent); }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
-.topbar-user { font-size: 13px; color: var(--text2); }
-.topbar-btn {
-  padding: 6px 14px;
-  background: transparent; border: 0.5px solid var(--border2);
-  border-radius: 99px; color: var(--text2);
-  font-size: 13px; cursor: pointer; transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-.topbar-btn:hover { border-color: var(--accent); color: var(--accent); }
-.topbar-btn.accent {
-  background: var(--accent); color: #1a1209;
-  border-color: var(--accent); font-weight: 600;
-}
-.topbar-btn.accent:hover { background: var(--accent2); }
-.lang-toggle { font-size: 12px; }
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px}
+.panel h3{font-size:14px;color:var(--ink2);font-weight:700;margin:2px 0 10px}
+.panel h3 + h3{margin-top:16px}
+.warn{background:#fff4e5;border-color:#f1d9b5;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}
+.link{background:none;border:0;color:var(--brown);font-weight:700;font-size:14px;padding:4px}
 
-/* ══════════════ TAB NAV ══════════════ */
-.tab-nav {
-  display: flex; gap: 0;
-  background: var(--surface);
-  border-bottom: 0.5px solid var(--border);
-}
-.tab-btn {
-  flex: 1; padding: 0.75rem 0.5rem;
-  background: transparent; border: none;
-  color: var(--text3); font-size: 13px;
-  cursor: pointer; transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-  border-bottom: 2px solid transparent;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-.tab-btn:hover { color: var(--text); }
+.shoot{display:grid;grid-template-columns:1.25fr 1fr;gap:12px;margin:6px 0 14px}
+.big{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;min-height:150px;border-radius:26px;padding:18px;background:var(--card);border:1px solid var(--line);cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .12s}
+.big:active{transform:scale(.97)}
+.big svg.i{width:34px;height:34px;margin-bottom:auto}
+.big b{font-size:19px}
+.big small{font-size:12px;color:var(--ink2)}
+.big.pri{background:var(--brown);border-color:var(--brown);color:#fff}
+.big.pri small{color:#ecd9c3}
 
-/* ══════════════ MAIN CONTENT ══════════════ */
-.main-content { flex: 1; overflow-y: auto; padding: 1.25rem; }
+.batch{display:flex;flex-direction:column;gap:10px}
+.batch .r{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2)}
+.batch .r > span{flex:none;width:72px}
+select.sel{flex:1;appearance:none;-webkit-appearance:none;background:var(--chip) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%237d6553' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 14px center;border:0;border-radius:99px;padding:9px 34px 9px 16px;font-size:15px;color:var(--ink);min-width:0}
 
-/* ══════════════ SCAN TAB ══════════════ */
-.scan-area {
-  border: 1.5px dashed var(--border2);
-  border-radius: var(--radius);
-  padding: 2rem 1.5rem;
-  text-align: center;
-  cursor: pointer; transition: all 0.2s;
-  position: relative; overflow: hidden;
-}
-.scan-area:hover { border-color: var(--accent); background: rgba(200,169,126,0.03); }
-.scan-area.drag-over { border-color: var(--accent); background: rgba(200,169,126,0.06); }
-.scan-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
-.scan-area h3 { color: var(--text); font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 0.5rem; }
-.scan-area p { color: var(--text2); font-size: 13px; }
-#file-input { display: none; }
-.scan-preview {
-  margin-top: 1rem; border-radius: var(--radius-sm);
-  overflow: hidden; max-height: 220px;
-}
-.scan-preview img { width: 100%; object-fit: contain; max-height: 220px; display: block; }
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:0;border-radius:99px;padding:6px 14px;font-size:14px;font-weight:600;background:var(--chip);color:var(--ink2);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip.off{opacity:.45}
+.chip .xx{font-size:16px;line-height:1;opacity:.7}
+.c0{background:var(--chip);color:var(--ink2)}.c1{background:var(--mint);color:var(--mint-i)}.c2{background:var(--yel);color:var(--yel-i)}
+.c3{background:var(--rose);color:var(--rose-i)}.c4{background:var(--sky);color:var(--sky-i)}.c5{background:var(--lil);color:var(--lil-i)}
+.chip.sel{box-shadow:inset 0 0 0 2px currentColor}
 
-.api-key-section {
-  margin-top: 1.25rem;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-}
-.api-key-section label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-.api-key-row { display: flex; gap: 8px; }
-.api-key-row input {
-  flex: 1; padding: 0.6rem 0.9rem;
-  background: var(--surface2); border: 0.5px solid var(--border2);
-  border-radius: var(--radius-sm); color: var(--text);
-  font-size: 14px; font-family: 'DM Mono', monospace;
-  outline: none;
-}
-.api-key-row input:focus { border-color: var(--accent); }
-.api-key-row button {
-  padding: 0.6rem 1rem;
-  background: var(--surface2); border: 0.5px solid var(--border2);
-  border-radius: var(--radius-sm); color: var(--text2);
-  font-size: 13px; cursor: pointer; white-space: nowrap;
-  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
-}
-.api-key-row button:hover { border-color: var(--accent); color: var(--accent); }
+.qhead{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px;font-size:14px;color:var(--ink2)}
+.qhead b{color:var(--ink)}
+.row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px;margin-bottom:8px;cursor:pointer}
+.row .th{width:76px;height:48px;border-radius:10px;object-fit:cover;background:var(--chip);flex:none}
+.row .ci{flex:1;min-width:0}
+.row .n{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .n .en{font-weight:500;color:var(--ink2);font-size:14px;margin-left:4px}
+.row .s{font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .tg{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.row .tg .chip{font-size:11px;padding:2px 8px}
+.st{font-size:12px;font-weight:700;flex:none;color:var(--ink3);text-align:right}
+.st.run{color:var(--brown)}.st.err{color:var(--red)}.st.ok{color:var(--green)}
+.tag-p{font-size:11px;font-weight:700;color:#fff;background:var(--tan);border-radius:99px;padding:3px 8px;flex:none}
+.tag-d{background:var(--rose-i)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--tan);border-top-color:var(--brown);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:4px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.prog{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin:0 2px 10px}
+.prog i{display:block;height:100%;background:var(--brown);transition:width .3s}
 
-.result-card {
-  margin-top: 1.25rem;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  animation: fadeUp 0.3s ease;
-}
-.result-card-header {
-  padding: 1rem 1.25rem;
-  border-bottom: 0.5px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.result-card-header h3 { font-size: 1rem; color: var(--text); }
-.result-body { padding: 1rem 1.25rem; }
-.field-row { margin-bottom: 0.85rem; }
-.field-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-.field-input {
-  width: 100%; padding: 0.6rem 0.9rem;
-  background: var(--surface2); border: 0.5px solid var(--border2);
-  border-radius: var(--radius-sm); color: var(--text);
-  font-size: 14px; font-family: 'DM Sans', sans-serif;
-  outline: none; transition: border-color 0.2s;
-}
-.field-input:focus { border-color: var(--accent); }
-textarea.field-input { resize: vertical; min-height: 70px; }
-select.field-input { cursor: pointer; }
-.save-btn {
-  width: 100%; margin-top: 0.5rem; padding: 0.85rem;
-  background: var(--accent); color: #1a1209;
-  border: none; border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
-  cursor: pointer; transition: all 0.2s;
-}
-.save-btn:hover { background: var(--accent2); }
-.save-btn:active { transform: scale(0.98); }
-.status-bar {
-  margin-top: 1rem; padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm);
-  font-size: 13px; text-align: center; display: none;
-}
-.status-bar.loading { background: rgba(200,169,126,0.1); color: var(--accent); border: 0.5px solid rgba(200,169,126,0.2); display: block; }
-.status-bar.success { background: rgba(109,184,138,0.1); color: var(--success); border: 0.5px solid rgba(109,184,138,0.2); display: block; }
-.status-bar.error { background: rgba(212,96,96,0.1); color: var(--danger); border: 0.5px solid rgba(212,96,96,0.2); display: block; }
+.btn{border:0;border-radius:99px;padding:15px 18px;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btn.main{background:var(--brown);color:#fff}
+.btn.main:active{background:var(--brown-d)}
+.btn.tan{background:var(--tan);color:var(--ink)}
+.btn.w{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:10px 14px;font-size:15px}
+.btn.danger{background:#fbe9e5;color:var(--red)}
 
-/* ══════════════ BROWSE TAB ══════════════ */
-.search-bar {
-  display: flex; gap: 8px; margin-bottom: 1rem;
-}
-.search-input {
-  flex: 1; padding: 0.65rem 1rem;
-  background: var(--surface); border: 0.5px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text);
-  font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none;
-  transition: border-color 0.2s;
-}
-.search-input:focus { border-color: var(--accent); }
-.search-select {
-  padding: 0.65rem 0.8rem;
-  background: var(--surface); border: 0.5px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text);
-  font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer;
-}
-.country-group { margin-bottom: 1.5rem; }
-.country-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 0.5px solid var(--border);
-}
-.country-flag { font-size: 1.4rem; }
-.country-name { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); }
-.country-count { font-size: 12px; color: var(--text3); margin-left: auto; }
-.cards-grid { display: flex; flex-direction: column; gap: 8px; }
-.contact-card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-  cursor: pointer; transition: all 0.2s;
-  position: relative;
-}
-.contact-card:hover { border-color: var(--border2); background: var(--surface2); }
-.contact-card-name { font-weight: 500; font-size: 15px; color: var(--text); margin-bottom: 3px; }
-.contact-card-title { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
-.contact-card-company { font-size: 13px; color: var(--accent); }
-.contact-card-meta { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
-.contact-meta-item { font-size: 12px; color: var(--text3); }
-.contact-card-actions { display: flex; gap: 6px; margin-top: 10px; }
-.action-btn {
-  padding: 5px 12px;
-  background: transparent; border: 0.5px solid var(--border2);
-  border-radius: 99px; color: var(--text2);
-  font-size: 12px; cursor: pointer; transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-.action-btn:hover { border-color: var(--accent); color: var(--accent); }
-.action-btn.del { }
-.action-btn.del:hover { border-color: var(--danger); color: var(--danger); }
-.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); }
-.empty-state p { margin-top: 1rem; font-size: 14px; }
-.export-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-.export-btn {
-  flex: 1; padding: 0.6rem;
-  background: var(--surface); border: 0.5px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text2);
-  font-size: 13px; cursor: pointer; text-align: center; transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-.export-btn:hover { border-color: var(--accent); color: var(--accent); }
-.stats-row { display: flex; gap: 8px; margin-bottom: 1.25rem; }
-.stat-pill {
-  flex: 1; padding: 0.6rem 0.75rem;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-sm); text-align: center;
-}
-.stat-num { font-size: 1.3rem; font-weight: 600; color: var(--accent); font-family: 'DM Serif Display', serif; }
-.stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:10px 16px;margin:6px 0 12px}
+.search input{flex:1;border:0;background:none;outline:none;font-size:16px;min-width:0}
+.search svg{color:var(--ink3)}
+.hs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;margin:0 -16px 10px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.hs::-webkit-scrollbar{display:none}
+.r2{display:flex;gap:8px;margin-bottom:12px}
+.cnt{font-size:13px;color:var(--ink3);margin:0 4px 8px}
+.grp{font-size:12px;font-weight:700;color:var(--ink3);letter-spacing:.08em;margin:14px 4px 6px}
+.empty{text-align:center;color:var(--ink3);padding:50px 20px}
+.empty svg.i{width:48px;height:48px;margin-bottom:10px}
 
-/* ══════════════ DETAIL MODAL ══════════════ */
-.modal-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7); z-index: 200;
-  align-items: flex-end; justify-content: center;
-  backdrop-filter: blur(4px);
-}
-.modal-overlay.open { display: flex; }
-.modal {
-  width: 100%; max-width: 480px;
-  background: var(--surface);
-  border-top: 0.5px solid var(--border);
-  border-radius: 20px 20px 0 0;
-  padding: 1.5rem 1.25rem;
-  max-height: 90vh; overflow-y: auto;
-  animation: slideUp 0.3s ease;
-}
-.modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 1.25rem; }
-.modal-name { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--text); margin-bottom: 4px; }
-.modal-title { font-size: 14px; color: var(--text2); margin-bottom: 4px; }
-.modal-company { font-size: 14px; color: var(--accent); margin-bottom: 1.25rem; }
-.modal-field { margin-bottom: 0.75rem; display: flex; gap: 10px; align-items: flex-start; }
-.modal-field-icon { color: var(--text3); font-size: 1rem; margin-top: 2px; flex-shrink: 0; width: 18px; text-align: center; }
-.modal-field-content {}
-.modal-field-label { font-size: 11px; color: var(--text3); }
-.modal-field-value { font-size: 14px; color: var(--text); word-break: break-all; }
-.modal-notes-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 0.75rem; margin-top: 0.25rem; font-size: 14px; color: var(--text2); white-space: pre-wrap; }
-.modal-close {
-  width: 100%; margin-top: 1.25rem; padding: 0.75rem;
-  background: var(--surface2); border: 0.5px solid var(--border2);
-  border-radius: var(--radius-sm); color: var(--text2);
-  font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
-}
-.modal-close:hover { color: var(--text); }
+.seg{display:flex;background:var(--chip);border-radius:99px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:none;border-radius:99px;padding:9px 4px;font-size:14px;font-weight:600;color:var(--ink2)}
+.seg button.on{background:var(--card);color:var(--brown);box-shadow:0 1px 4px rgba(74,42,20,.12)}
+.hint{font-size:12px;color:var(--ink3);margin-top:8px;line-height:1.5}
+.inp{width:100%;border:1px solid var(--line);background:#fff;border-radius:14px;padding:11px 14px;font-size:16px;outline:none}
+.inp:focus{border-color:var(--tan)}
+textarea.inp{min-height:90px;resize:vertical}
+.ir{display:flex;gap:8px}
+.ir .inp{flex:1;min-width:0}
+.ir .btn{width:auto;flex:none}
+.prev{overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:14px}
+.prev table{border-collapse:collapse;font-size:12px;white-space:nowrap}
+.prev th,.prev td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
+.prev th{background:var(--chip);color:var(--ink2)}
 
-/* ══════════════ SETTINGS TAB ══════════════ */
-.settings-section { margin-bottom: 1.5rem; }
-.settings-section-title { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
-.settings-item {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.9rem 1.25rem;
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 6px;
-}
-.settings-item-left {}
-.settings-item-label { font-size: 14px; color: var(--text); }
-.settings-item-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
-.settings-item-right { color: var(--text2); font-size: 13px; }
-.danger-btn {
-  width: 100%; padding: 0.8rem;
-  background: transparent; border: 0.5px solid var(--danger);
-  border-radius: var(--radius-sm); color: var(--danger);
-  font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
-}
-.danger-btn:hover { background: rgba(212,96,96,0.1); }
+/* editor sheet */
+.sheet{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.sh-top{position:relative;display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 10px) 16px 10px;flex:none}
+.sh-top h2{font-size:19px;font-weight:800}
+.sh-top .x{position:absolute;right:14px;bottom:6px;width:42px;height:42px;border-radius:50%;background:var(--chip);border:0;color:var(--brown);display:flex;align-items:center;justify-content:center}
+.sh-top .pos{position:absolute;left:18px;bottom:16px;font-size:13px;color:var(--ink3);font-weight:600}
+.sh-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 16px}
+.cbox{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:18px;max-width:560px;margin:0 auto}
+.imgs{display:flex;gap:10px;margin-bottom:14px}
+.imgs .im{flex:1.7;aspect-ratio:1.65;border-radius:16px;overflow:hidden;background:var(--chip);position:relative}
+.imgs .im img{width:100%;height:100%;object-fit:cover;display:block}
+.imgs .add{flex:1;border-radius:16px;border:1.5px dashed #e2d5c5;background:#fbf7f1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--ink2);font-size:14px;font-weight:600;cursor:pointer;overflow:hidden;position:relative}
+.imgs .add img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.note-tr{font-size:12px;color:var(--yel-i);background:#fdf6d8;border-radius:10px;padding:6px 10px;margin-bottom:10px}
+.dup{font-size:13px;color:var(--rose-i);background:var(--rose);border-radius:12px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dup button{border:0;background:#fff;color:var(--rose-i);border-radius:99px;padding:4px 10px;font-size:12px;font-weight:700;flex:none}
+input.ln,textarea.ln{width:100%;border:0;border-bottom:1px dashed transparent;background:transparent;padding:4px 0;outline:none;color:inherit;border-radius:0}
+textarea.ln{resize:none;min-height:28px;overflow:hidden}
+input.ln:focus,textarea.ln:focus{border-bottom-color:var(--tan)}
+.ln::placeholder{color:#cfc2b4;font-weight:400}
+.ln.tr{background:linear-gradient(transparent 58%,#fbeaa5 58%)}
+.nzh{font-size:27px;font-weight:800}
+.nen{font-size:20px;font-weight:700;color:var(--ink)}
+.tzh{font-size:18px;color:var(--ink2);margin-top:8px}
+.ten{font-size:17px;color:var(--ink2)}
+.czh{font-size:20px;font-weight:700;margin-top:8px}
+.cen{font-size:17px;font-weight:600}
+.fl{display:flex;align-items:flex-start;gap:12px;padding:5px 0}
+.fl > svg.i{width:24px;height:24px;margin-top:5px;color:var(--ink2)}
+.fl .col{flex:1;min-width:0}
+.fl input.ln,.fl textarea.ln{font-size:17px;color:#6d5848}
+.fl .lb{flex:none;font-size:17px;color:var(--ink2);margin-top:4px;width:52px}
+.fl .act{flex:none;border:0;background:var(--chip);color:var(--brown);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.fl .act svg.i{width:18px;height:18px}
+.sep{height:12px}
+.tagadd{display:flex;gap:10px;margin:10px 0}
+.tagadd input{flex:1;min-width:0;background:#fbf7f1;border:1.5px solid var(--line);border-radius:99px;padding:10px 18px;font-size:16px;outline:none}
+.tagadd button{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--tan);color:var(--ink);display:flex;align-items:center;justify-content:center}
+.sh-foot{flex:none;padding:10px 16px calc(10px + var(--sb));background:var(--bg)}
+.sh-foot .g{max-width:560px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sh-foot .g .main{grid-column:1/-1}
+.mini{max-width:560px;margin:12px auto 0;display:flex;gap:8px}
+.mini button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 4px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;justify-content:center;gap:5px}
+.mini button.d{color:var(--red)}
+.mini svg.i{width:17px;height:17px}
 
-/* ══════════════ ANIMATIONS ══════════════ */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(200,169,126,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ══════════════ IMAGE PREVIEW IN SCAN ══════════════ */
-.card-img-preview {
-  width: 100%; border-radius: var(--radius-sm);
-  max-height: 180px; object-fit: contain; display: block;
-  background: var(--surface2);
-}
-.country-badge {
-  display: inline-block; padding: 2px 8px;
-  background: rgba(200,169,126,0.1); color: var(--accent);
-  border-radius: 99px; font-size: 11px;
-  border: 0.5px solid rgba(200,169,126,0.2);
-  margin-left: 6px; vertical-align: middle;
-}
+.toast{position:fixed;left:50%;bottom:calc(96px + var(--sb));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;max-width:90vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.18);animation:up .2s}
+.viewer{position:fixed;inset:0;z-index:80;background:rgba(20,12,6,.92);display:flex;align-items:center;justify-content:center;padding:20px}
+.viewer img{max-width:100%;max-height:100%;border-radius:10px}
 </style>
 </head>
 <body>
 
-<!-- ══════════ APP SCREEN ══════════ -->
-<div id="screen-app" class="screen active">
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="topbar-logo">CardVault</div>
-    <div class="topbar-right">
-      <button class="topbar-btn lang-toggle" onclick="toggleLang()" id="lang-btn">EN</button>
-    </div>
+<header class="top"><div class="in">
+  <div><h1 data-t="appTitle">名片掃描</h1><small id="hdrSub"></small></div>
+  <button class="pill" id="langBtn" onclick="toggleLang()">EN</button>
+</div></header>
+
+<!-- ═════ SCAN ═════ -->
+<section id="t-scan" class="tab on"><div class="wrap">
+  <div id="keyWarn" class="panel warn" hidden><span data-t="noKey">尚未設定 Claude API 金鑰</span><button class="link" onclick="go('set')" data-t="goSet">前往設定</button></div>
+
+  <div class="shoot">
+    <label class="big pri" for="inCam">
+      <svg class="i" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.8l1.4-2h6.6l1.4 2h1.8A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="12.5" r="3.6"/></svg>
+      <b data-t="shoot">拍照掃描</b><small data-t="shootSub">拍完馬上可拍下一張</small>
+    </label>
+    <label class="big" for="inLib">
+      <svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M7 3h11.5A2.5 2.5 0 0 1 21 5.5V17"/><path d="m3.5 16 4-4 3.5 3.5 2-2 3.5 3.5"/><circle cx="12.5" cy="9.5" r="1.3"/></svg>
+      <b data-t="lib">相簿多選</b><small data-t="libSub">一次選多張批量辨識</small>
+    </label>
+  </div>
+  <input type="file" id="inCam" class="vh" accept="image/*" capture="environment">
+  <input type="file" id="inLib" class="vh" accept="image/*" multiple>
+
+  <div class="panel batch">
+    <div class="r"><span data-t="batchTo">本批存入</span><select class="sel" id="bFolder" onchange="S.bFolder=this.value;saveS()"></select></div>
+    <div class="r" style="align-items:flex-start"><span style="padding-top:6px" data-t="batchTags">本批標籤</span><div class="chips" id="bTags" style="flex:1"></div></div>
   </div>
 
-  <!-- Tab Nav -->
-  <div class="tab-nav">
-    <button class="tab-btn active" id="tab-scan-btn" onclick="switchTab('scan')">
-      <span>📷</span> <span data-i18n="tab_scan">掃描</span>
-    </button>
-    <button class="tab-btn" id="tab-browse-btn" onclick="switchTab('browse')">
-      <span>📋</span> <span data-i18n="tab_browse">瀏覽</span>
-    </button>
-    <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">
-      <span>⚙️</span> <span data-i18n="tab_settings">設定</span>
-    </button>
+  <div id="qWrap" hidden>
+    <div class="qhead"><span id="qStat"></span><button class="link" onclick="clearQ()" data-t="clearQ">清除列表</button></div>
+    <div class="prog"><i id="qProg" style="width:0"></i></div>
+    <div id="qList"></div>
   </div>
+  <button class="btn main" id="revBtn" hidden onclick="reviewNext()" style="margin-top:8px"></button>
+</div></section>
 
-  <!-- SCAN TAB -->
-  <div id="tab-scan" class="main-content">
-    <!-- API Key -->
-    <div class="api-key-section">
-      <label data-i18n="api_key_label">Claude API 金鑰</label>
-      <div class="api-key-row">
-        <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
-        <button onclick="saveApiKey()" data-i18n="save">儲存</button>
+<!-- ═════ LIST ═════ -->
+<section id="t-list" class="tab"><div class="wrap">
+  <div class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" data-tp="search" placeholder="搜尋姓名、公司、Email、電話…" oninput="renderList()"></div>
+  <div class="chips hs" id="fChips"></div>
+  <div class="r2"><select class="sel" id="fFolder" onchange="renderList()"></select><select class="sel" id="fSort" onchange="renderList()" style="flex:.7"></select></div>
+  <div class="cnt" id="lCnt"></div>
+  <div id="list"></div>
+</div></section>
+
+<!-- ═════ EXPORT ═════ -->
+<section id="t-exp" class="tab"><div class="wrap">
+  <div class="panel">
+    <h3 data-t="expLang">語言</h3>
+    <div class="seg" id="xLang"><button data-v="zh" data-t="lzh">中文版</button><button data-v="en">English</button><button data-v="bi" data-t="lbi">中英對照</button></div>
+    <h3 data-t="expFmt">格式</h3>
+    <div class="seg" id="xFmt"><button data-v="xlsx">Excel</button><button data-v="csv">CSV</button><button data-v="vcf" data-t="vcf">通訊錄</button></div>
+    <h3 data-t="expScope">範圍</h3>
+    <select class="sel" id="xScope" style="width:100%" onchange="expPreview()"></select>
+    <div class="hint" id="xHint"></div>
+    <div class="prev" id="xPrev"></div>
+    <button class="btn main" style="margin-top:14px" onclick="doExport()"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg><span data-t="expBtn">匯出 / 分享</span></button>
+  </div>
+</div></section>
+
+<!-- ═════ SETTINGS ═════ -->
+<section id="t-set" class="tab"><div class="wrap">
+  <div class="panel">
+    <h3 data-t="setKey">Claude API 金鑰</h3>
+    <div class="ir"><input class="inp" id="sKey" type="password" placeholder="sk-ant-..." autocomplete="off"><button class="btn main sm" onclick="saveKey()" data-t="save">儲存</button></div>
+    <div class="hint"><span data-t="keyHint">金鑰只存在這支手機的瀏覽器。</span> <button class="link" onclick="testKey()" data-t="test">測試</button> <span id="kRes"></span></div>
+    <h3 data-t="mode">辨識模式</h3>
+    <div class="seg" id="sModel"><button data-v="claude-haiku-5-5" data-t="fast">快速</button><button data-v="claude-sonnet-5-5" data-t="acc">精準</button></div>
+    <div class="hint" data-t="modeHint">快速：約 2–4 秒／張，費用最低；精準：小字、手寫、多語名片較準，但較慢。批量時會同時辨識 4 張。</div>
+  </div>
+  <div class="panel">
+    <h3 data-t="mgTags">標籤</h3>
+    <div class="chips" id="sTags"></div>
+    <div class="tagadd"><input id="sTagIn" data-tp="newTag" placeholder="新增標籤" onkeydown="if(event.key==='Enter')addTag()"><button onclick="addTag()"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <h3 data-t="mgFolders">資料夾</h3>
+    <div class="chips" id="sFolders"></div>
+    <div class="tagadd"><input id="sFolIn" data-tp="newFolder" placeholder="新增資料夾（例：METALEX 2026）" onkeydown="if(event.key==='Enter')addFolder()"><button onclick="addFolder()"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  </div>
+  <div class="panel">
+    <h3 data-t="mailTpl">寄信範本</h3>
+    <input class="inp" id="sMe" data-tp="me" placeholder="我的署名（姓名／公司／電話）" style="margin-bottom:10px">
+    <div class="seg" id="sMailL" style="margin-bottom:10px"><button data-v="zh">中文</button><button data-v="en">English</button></div>
+    <input class="inp" id="sMailS" style="margin-bottom:8px">
+    <textarea class="inp" id="sMailB"></textarea>
+    <div class="hint" data-t="tplHint">可用 {name} {company} {me}。寄信時依名片國家自動選中文或英文範本。</div>
+  </div>
+  <div class="panel">
+    <h3 data-t="data">資料</h3>
+    <div class="ir" style="margin-bottom:8px"><button class="btn w sm" style="flex:1;width:auto" onclick="backup()" data-t="backup">備份</button><label class="btn w sm" style="flex:1" for="inRestore" data-t="restore">還原備份</label></div>
+    <input type="file" id="inRestore" class="vh" accept=".json,application/json">
+    <button class="btn danger sm" onclick="clearAll()" data-t="clearAll">清除全部名片</button>
+    <div class="hint" id="sInfo"></div>
+  </div>
+</div></section>
+
+<nav class="bottom"><div class="in">
+  <button data-tab="scan" class="on" onclick="go('scan')"><svg class="i" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><rect x="7" y="8.5" width="10" height="7" rx="1.5"/></svg><span data-t="tScan">掃描</span></button>
+  <button data-tab="list" onclick="go('list')"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.8 16c.6-1.3 1.6-2 2.7-2s2.1.7 2.7 2M14 10h4M14 13.5h3"/></svg><span data-t="tList">名片夾</span><i class="bd" id="pendBd" hidden></i></button>
+  <button data-tab="exp" onclick="go('exp')"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l2 2 4-4"/></svg><span data-t="tExp">匯出</span></button>
+  <button data-tab="set" onclick="go('set')"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span data-t="tSet">設定</span></button>
+</div></nav>
+
+<!-- ═════ EDITOR ═════ -->
+<div class="sheet" id="ed" hidden>
+  <div class="sh-top"><span class="pos" id="edPos"></span><h2 data-t="edTitle">名片資料</h2><button class="x" onclick="closeEd()"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sh-body">
+    <div class="cbox">
+      <div class="imgs">
+        <div class="im" onclick="viewImg('img')"><img id="eImg" alt=""></div>
+        <label class="add" for="inBack"><img id="eBack" alt="" hidden><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span id="eBackL" data-t="addBack">新增反面</span></label>
       </div>
-      <div style="font-size:12px; color:var(--text3); margin-top:6px;" data-i18n="api_key_hint">金鑰存在您的瀏覽器，不會上傳至任何伺服器</div>
+      <input type="file" id="inBack" class="vh" accept="image/*" capture="environment">
+      <div class="dup" id="eDup" hidden><span id="eDupT"></span><button onclick="delCur(true)" data-t="delDup">刪除這張</button></div>
+      <div class="note-tr" id="eTr" hidden data-t="trHint">螢光底＝AI 自動翻譯，請確認</div>
+
+      <input class="ln nzh" data-k="name_zh" data-tp="pNameZh" placeholder="中文姓名">
+      <input class="ln nen" data-k="name_en" data-tp="pNameEn" placeholder="English name">
+      <input class="ln tzh" data-k="title_zh" data-tp="pTitleZh" placeholder="中文職稱">
+      <input class="ln ten" data-k="title_en" data-tp="pTitleEn" placeholder="English title">
+      <input class="ln czh" data-k="company_zh" data-tp="pCoZh" placeholder="中文公司名稱">
+      <input class="ln cen" data-k="company_en" data-tp="pCoEn" placeholder="English company name">
+      <div class="sep"></div>
+      <div class="fl"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg><div class="col"><input class="ln" data-k="email" type="email" inputmode="email" placeholder="Email"></div></div>
+      <div class="fl"><svg class="i" viewBox="0 0 24 24"><path d="M5 4h3.5l1.5 4.5-2 1.2a11 11 0 0 0 6.3 6.3l1.2-2 4.5 1.5V19a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg><div class="col"><input class="ln" data-k="phone" type="tel" data-tp="pPhone" placeholder="電話"></div><button class="act" onclick="dial('phone')"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="fl"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg><div class="col"><input class="ln" data-k="mobile" type="tel" data-tp="pMobile" placeholder="手機"></div><button class="act" onclick="dial('mobile')"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="fl"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><div class="col"><textarea class="ln" rows="1" data-k="address_zh" data-tp="pAddrZh" placeholder="中文地址"></textarea><textarea class="ln" rows="1" data-k="address_en" data-tp="pAddrEn" placeholder="English address"></textarea></div></div>
+      <div class="fl"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg><div class="col"><input class="ln" data-k="website" type="url" inputmode="url" data-tp="pWeb" placeholder="網站"></div></div>
+      <div class="fl"><svg class="i" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><select class="sel" data-k="country" id="eCountry"></select></div>
+      <div class="sep"></div>
+      <div class="fl" style="align-items:center"><svg class="i" viewBox="0 0 24 24"><path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.4"/></svg><span class="lb" data-t="tags">標籤</span><div class="chips" id="eTagsOn" style="flex:1"></div></div>
+      <div class="tagadd"><input id="eTagIn" data-tp="newTag" placeholder="新增標籤" onkeydown="if(event.key==='Enter')edAddTag()"><button onclick="edAddTag()"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+      <div class="chips" id="eTagsAll"></div>
+      <div class="sep"></div>
+      <div class="fl" style="align-items:center"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2.5h6.5A2.5 2.5 0 0 1 21 10v7.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg><span class="lb" data-t="folder">資料夾</span><select class="sel" data-k="folder" id="eFolder"></select></div>
+      <div class="fl"><svg class="i" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8.5 8.5h7M8.5 12h7M8.5 15.5h4"/></svg><div class="col"><textarea class="ln" rows="1" data-k="notes" data-tp="pNotes" placeholder="備註（在哪認識、聊了什麼）"></textarea></div></div>
     </div>
-
-    <!-- Scan Area -->
-    <div class="scan-area" id="scan-area" onclick="document.getElementById('file-input').click()" style="margin-top:1rem;"
-         ondragover="event.preventDefault();this.classList.add('drag-over')"
-         ondragleave="this.classList.remove('drag-over')"
-         ondrop="handleDrop(event)">
-      <div class="scan-icon">📇</div>
-      <h3 data-i18n="scan_title">拍照或上傳名片</h3>
-      <p data-i18n="scan_hint">點擊選擇圖片 · 或將圖片拖曳至此</p>
-      <div id="img-preview" style="display:none; margin-top:1rem;">
-        <img id="preview-img" class="card-img-preview">
-      </div>
-    </div>
-    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="handleFile(event)">
-
-    <div id="status-bar" class="status-bar"></div>
-
-    <!-- Result Card -->
-    <div class="result-card" id="result-card" style="display:none;">
-      <div class="result-card-header">
-        <h3 data-i18n="result_title">辨識結果</h3>
-        <span style="font-size:12px; color:var(--text3);" data-i18n="edit_hint">可直接編輯</span>
-      </div>
-      <div class="result-body">
-        <div class="field-row"><div class="field-label" data-i18n="f_name">姓名</div><input class="field-input" id="f-name"></div>
-        <div class="field-row"><div class="field-label" data-i18n="f_title">職位</div><input class="field-input" id="f-title"></div>
-        <div class="field-row"><div class="field-label" data-i18n="f_company">公司</div><input class="field-input" id="f-company"></div>
-        <div class="field-row"><div class="field-label" data-i18n="f_email">Email</div><input class="field-input" id="f-email" type="email"></div>
-        <div class="field-row"><div class="field-label" data-i18n="f_phone">電話</div><input class="field-input" id="f-phone"></div>
-        <div class="field-row"><div class="field-label" data-i18n="f_address">地址</div><input class="field-input" id="f-address"></div>
-        <div class="field-row"><div class="field-label" data-i18n="f_country">國家</div>
-          <select class="field-input" id="f-country">
-            <option value="">-- 選擇國家 --</option>
-          </select>
-        </div>
-        <div class="field-row"><div class="field-label" data-i18n="f_notes">備註</div><textarea class="field-input" id="f-notes" rows="3"></textarea></div>
-        <button class="save-btn" onclick="saveCard()" data-i18n="save_card">儲存名片</button>
-      </div>
+    <div class="mini">
+      <button onclick="saveVcfOne()"><svg class="i" viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M3 20c.8-3.5 3.6-5.5 7-5.5 1.3 0 2.5.3 3.5.8M18 14v6M15 17h6"/></svg><span data-t="toContacts">存到通訊錄</span></button>
+      <button onclick="rescan()"><svg class="i" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.7L4 15.5M4 20v-4.5h4.5"/></svg><span data-t="rescan">重新辨識</span></button>
+      <button class="d" onclick="delCur()"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4h6v3"/></svg><span data-t="del">刪除</span></button>
     </div>
   </div>
-
-  <!-- BROWSE TAB -->
-  <div id="tab-browse" class="main-content" style="display:none;">
-    <div class="stats-row">
-      <div class="stat-pill"><div class="stat-num" id="stat-total">0</div><div class="stat-label" data-i18n="stat_total">總名片數</div></div>
-      <div class="stat-pill"><div class="stat-num" id="stat-countries">0</div><div class="stat-label" data-i18n="stat_countries">國家數</div></div>
-    </div>
-    <div class="export-row">
-      <button class="export-btn" onclick="exportCSV()" data-i18n="export_csv">📥 匯出 CSV</button>
-      <button class="export-btn" onclick="exportJSON()" data-i18n="export_json">📥 匯出 JSON</button>
-    </div>
-    <div class="search-bar">
-      <input class="search-input" id="search-input" placeholder="搜尋姓名、公司、Email…" oninput="renderBrowse()">
-    </div>
-    <div class="search-bar" style="margin-bottom:1rem;">
-      <select class="search-select" style="flex:1;" id="continent-filter" onchange="updateCountryFilter()">
-        <option value="">🌏 全部洲</option>
-      </select>
-      <select class="search-select" style="flex:1;" id="country-filter" onchange="renderBrowse()">
-        <option value="">全部國家</option>
-      </select>
-    </div>
-    <div id="browse-list"></div>
-  </div>
-
-  <!-- SETTINGS TAB -->
-  <div id="tab-settings" class="main-content" style="display:none;">
-    <div class="settings-section">
-      <div class="settings-section-title" data-i18n="settings_cards_count">名片數量</div>
-      <div class="settings-item">
-        <div class="settings-item-left">
-          <div class="settings-item-label" id="settings-card-count">—</div>
-        </div>
-      </div>
-    </div>
-    <div class="settings-section">
-      <div class="settings-section-title" data-i18n="settings_manage">資料管理</div>
-      <div class="settings-item" onclick="exportCSV()" style="cursor:pointer;">
-        <div class="settings-item-label" data-i18n="export_all">匯出全部名片</div>
-        <div class="settings-item-right">CSV →</div>
-      </div>
-    </div>
-    <div class="settings-section">
-      <div class="settings-section-title" data-i18n="settings_danger">危險區域</div>
-      <button class="danger-btn" onclick="clearAllData()" data-i18n="clear_data">清除我的所有名片資料</button>
-    </div>
-  </div>
-</div>
-
-<!-- DETAIL MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-name" id="modal-name"></div>
-    <div class="modal-title" id="modal-title"></div>
-    <div class="modal-company" id="modal-company"></div>
-    <div id="modal-fields"></div>
-    <button class="modal-close" onclick="closeModalBtn()" data-i18n="close">關閉</button>
-  </div>
+  <div class="sh-foot"><div class="g">
+    <button class="btn w" onclick="edNext()"><span data-t="next">下一張</span><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+    <button class="btn tan" onclick="edMail()"><span data-t="mail">寄信</span><svg class="i" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
+    <button class="btn main" onclick="edDone()"><span data-t="done">確認完成</span><svg class="i" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>
+  </div></div>
 </div>
 
 <script>
-// ══════════════════════════════════════════
-// I18N
-// ══════════════════════════════════════════
-const i18n = {
-  zh: {
-    tab_scan:'掃描', tab_browse:'瀏覽', tab_settings:'設定',
-    api_key_label:'Claude API 金鑰', save:'儲存',
-    api_key_hint:'金鑰存在您的瀏覽器，不會上傳至任何伺服器',
-    scan_title:'拍照或上傳名片', scan_hint:'點擊選擇圖片 · 或將圖片拖曳至此',
-    result_title:'辨識結果', edit_hint:'可直接編輯',
-    f_name:'姓名', f_title:'職位', f_company:'公司', f_email:'Email',
-    f_phone:'電話', f_address:'地址', f_country:'國家', f_notes:'備註',
-    save_card:'儲存名片',
-    stat_total:'總名片數', stat_countries:'國家數',
-    export_csv:'📥 匯出 CSV', export_json:'📥 匯出 JSON',
-    settings_account:'帳號', settings_logged_in:'目前登入',
-    settings_cards_count:'名片數量', settings_manage:'資料管理',
-    export_all:'匯出全部名片', settings_danger:'危險區域', clear_data:'清除我的所有名片資料',
-    close:'關閉',
-    login_subtitle:'名片智能管理系統', lbl_username:'使用者名稱', lbl_password:'密碼',
-    scanning:'🔄 AI 辨識中，請稍候…',
-    saved:'✓ 名片已儲存', save_failed:'辨識失敗，請確認 API 金鑰', no_api:'請先輸入 API 金鑰',
-    confirm_delete:'確定刪除此名片？', confirm_clear:'確定清除所有名片？此操作無法復原。',
-    empty:'尚無名片，前往掃描頁面開始掃描', search_ph:'搜尋姓名、公司、Email…',
-  },
-  en: {
-    tab_scan:'Scan', tab_browse:'Browse', tab_settings:'Settings',
-    api_key_label:'Claude API Key', save:'Save',
-    api_key_hint:'Key is stored in your browser only, never uploaded',
-    scan_title:'Take or Upload a Card', scan_hint:'Click to select image · or drag & drop here',
-    result_title:'Recognition Result', edit_hint:'Editable',
-    f_name:'Name', f_title:'Title', f_company:'Company', f_email:'Email',
-    f_phone:'Phone', f_address:'Address', f_country:'Country', f_notes:'Notes',
-    save_card:'Save Card',
-    stat_total:'Total Cards', stat_countries:'Countries',
-    export_csv:'📥 Export CSV', export_json:'📥 Export JSON',
-    settings_account:'Account', settings_logged_in:'Logged in as',
-    settings_cards_count:'Cards saved', settings_manage:'Data Management',
-    export_all:'Export All Cards', settings_danger:'Danger Zone', clear_data:'Clear all my card data',
-    close:'Close',
-    login_subtitle:'Smart Business Card Manager', lbl_username:'Username', lbl_password:'Password',
-    scanning:'🔄 AI scanning, please wait…',
-    saved:'✓ Card saved', save_failed:'Recognition failed, check API key', no_api:'Please enter your API key first',
-    confirm_delete:'Delete this card?', confirm_clear:'Clear all cards? This cannot be undone.',
-    empty:'No cards yet. Go to Scan tab to get started', search_ph:'Search name, company, email…',
-  }
+'use strict';
+// ───────── i18n ─────────
+const L = {
+ zh:{appTitle:'名片掃描',tScan:'掃描',tList:'名片夾',tExp:'匯出',tSet:'設定',noKey:'尚未設定 Claude API 金鑰',goSet:'前往設定',
+  shoot:'拍照掃描',shootSub:'拍完馬上可拍下一張',lib:'相簿多選',libSub:'一次選多張批量辨識',batchTo:'本批存入',batchTags:'本批標籤',clearQ:'清除列表',
+  stPrep:'處理圖片…',stWait:'排隊中',stRun:'辨識中…',stErr:'失敗，點我重試',qStat:'完成 {d}／{t}',qErr:'，失敗 {e}',review:'逐張確認（{n} 張待確認）',
+  pending:'待確認',dupB:'重複?',all:'全部',uncat:'未分類',search:'搜尋姓名、公司、Email、電話…',sNew:'最新',sCo:'公司',sCt:'國家',sName:'姓名',cards:'{n} 張名片',
+  empty:'還沒有名片，到「掃描」開始吧',noMatch:'找不到符合的名片',edTitle:'名片資料',addBack:'新增反面',back:'反面',next:'下一張',mail:'寄信',done:'確認完成',del:'刪除',
+  toContacts:'存到通訊錄',rescan:'重新辨識',trHint:'螢光底＝AI 自動翻譯，請確認',dup:'可能與「{n}」重複',delDup:'刪除這張',
+  pNameZh:'中文姓名',pNameEn:'English name',pTitleZh:'中文職稱',pTitleEn:'English title',pCoZh:'中文公司名稱',pCoEn:'English company name',
+  pPhone:'電話',pMobile:'手機',pWeb:'網站',pAddrZh:'中文地址',pAddrEn:'English address',pNotes:'備註（在哪認識、聊了什麼）',
+  tags:'標籤',folder:'資料夾',newTag:'新增標籤',newFolder:'新增資料夾（例：METALEX 2026）',country:'國家',
+  expLang:'語言',lzh:'中文版',lbi:'中英對照',expFmt:'格式',vcf:'通訊錄',expScope:'範圍',expBtn:'匯出 / 分享',
+  xAll:'全部名片',xPend:'待確認',xNew:'今天掃描的',xN:'將匯出 {n} 張。',xBi:'Excel「中英對照」內含：對照表、中文、English 三個分頁。',
+  xVcf:'vCard 可直接匯入 iPhone／Android 通訊錄。',xNone:'沒有可匯出的名片',
+  setKey:'Claude API 金鑰',save:'儲存',keyHint:'金鑰只存在這支手機的瀏覽器。',test:'測試',keyOk:'✓ 金鑰可用',saved:'已儲存',
+  mode:'辨識模式',fast:'快速',acc:'精準',modeHint:'快速：約 2–4 秒／張，費用最低；精準：小字、手寫、多語名片較準，但較慢。批量時同時辨識 4 張。',
+  mgTags:'標籤',mgFolders:'資料夾',mailTpl:'寄信範本',me:'我的署名（姓名／公司／電話）',tplHint:'可用 {name} {company} {me}。寄信時依名片國家自動選中文或英文範本。',
+  data:'資料',backup:'備份',restore:'還原備份',clearAll:'清除全部名片',info:'共 {n} 張名片，存在這支手機的瀏覽器。換手機前請先「備份」。',
+  cDel:'確定刪除這張名片？',cClear:'確定刪除全部名片？無法復原。',cDelTag:'刪除標籤「{n}」？（名片上的標籤也會移除）',cDelFol:'刪除資料夾「{n}」？（名片會移到未分類）',
+  allDone:'全部確認完成 🎉',noEmail:'這張名片沒有 Email',noPhone:'沒有號碼',badKey:'API 金鑰錯誤，請到設定檢查',parseErr:'辨識結果格式錯誤，請重試',imgErr:'圖片無法讀取',
+  backMerged:'已加入反面資料',rescanDone:'已重新辨識',restored:'已還原 {n} 張',working:'辨識中…',deleted:'已刪除',exported:'已匯出',noImg:'沒有原圖可辨識'},
+ en:{appTitle:'Card Scanner',tScan:'Scan',tList:'Cards',tExp:'Export',tSet:'Settings',noKey:'Claude API key not set',goSet:'Settings',
+  shoot:'Take photo',shootSub:'Shoot one after another',lib:'From album',libSub:'Pick many, batch scan',batchTo:'Save to',batchTags:'Tags',clearQ:'Clear',
+  stPrep:'Preparing…',stWait:'Queued',stRun:'Scanning…',stErr:'Failed · tap to retry',qStat:'Done {d}/{t}',qErr:', failed {e}',review:'Review ({n} pending)',
+  pending:'Review',dupB:'Dup?',all:'All',uncat:'Unfiled',search:'Search name, company, email, phone…',sNew:'Newest',sCo:'Company',sCt:'Country',sName:'Name',cards:'{n} cards',
+  empty:'No cards yet — start scanning',noMatch:'No matching cards',edTitle:'Business card',addBack:'Add back',back:'Back',next:'Next',mail:'Email',done:'Confirm',del:'Delete',
+  toContacts:'Save contact',rescan:'Re-scan',trHint:'Highlighted = AI translated, please check',dup:'Possible duplicate of "{n}"',delDup:'Delete this',
+  pNameZh:'Chinese name',pNameEn:'English name',pTitleZh:'Chinese title',pTitleEn:'English title',pCoZh:'Chinese company',pCoEn:'English company',
+  pPhone:'Phone',pMobile:'Mobile',pWeb:'Website',pAddrZh:'Chinese address',pAddrEn:'English address',pNotes:'Notes (where we met, what we discussed)',
+  tags:'Tags',folder:'Folder',newTag:'New tag',newFolder:'New folder (e.g. METALEX 2026)',country:'Country',
+  expLang:'Language',lzh:'Chinese',lbi:'Bilingual',expFmt:'Format',vcf:'Contacts',expScope:'Scope',expBtn:'Export / Share',
+  xAll:'All cards',xPend:'To review',xNew:'Scanned today',xN:'{n} cards will be exported.',xBi:'Bilingual Excel has 3 sheets: side-by-side, Chinese, English.',
+  xVcf:'vCard imports straight into iPhone / Android contacts.',xNone:'Nothing to export',
+  setKey:'Claude API key',save:'Save',keyHint:'Stored only in this browser.',test:'Test',keyOk:'✓ Key works',saved:'Saved',
+  mode:'Mode',fast:'Fast',acc:'Accurate',modeHint:'Fast: ~2–4 s per card, cheapest. Accurate: better for tiny print, handwriting, mixed languages, but slower. Batch runs 4 at a time.',
+  mgTags:'Tags',mgFolders:'Folders',mailTpl:'Email templates',me:'My signature (name / company / phone)',tplHint:'Use {name} {company} {me}. Chinese or English template is picked by the card\'s country.',
+  data:'Data',backup:'Backup',restore:'Restore',clearAll:'Delete all cards',info:'{n} cards stored in this browser. Back up before changing phones.',
+  cDel:'Delete this card?',cClear:'Delete ALL cards? This cannot be undone.',cDelTag:'Delete tag "{n}"?',cDelFol:'Delete folder "{n}"? Cards move to Unfiled.',
+  allDone:'All reviewed 🎉',noEmail:'No email on this card',noPhone:'No number',badKey:'Invalid API key — check Settings',parseErr:'Could not read the result, retry',imgErr:'Cannot read image',
+  backMerged:'Back side merged',rescanDone:'Re-scanned',restored:'Restored {n}',working:'Scanning…',deleted:'Deleted',exported:'Exported',noImg:'No image to scan'}
 };
-let lang = localStorage.getItem('cv_lang') || 'zh';
-function t(key) { return (i18n[lang][key] || i18n['zh'][key] || key); }
-function applyLang() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = t(el.getAttribute('data-i18n'));
+const T=(k,v)=>{let s=(L[S.lang]||L.zh)[k]??L.zh[k]??k;if(v)for(const x in v)s=s.split('{'+x+'}').join(v[x]);return s};
+
+// ───────── helpers ─────────
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const hasCJK=s=>/[\u3400-\u9fff]/.test(s||'');
+const digits=s=>String(s||'').replace(/\D/g,'');
+const today=()=>new Date().toISOString().slice(0,10);
+function toast(m,ms=2200){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),ms)}
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+
+// ───────── settings ─────────
+const DEF={lang:'zh',model:'claude-haiku-5-5',tags:['潛在客戶','客戶','代理商','供應商','合作夥伴','展會'],folders:[],bFolder:'',bTags:[],me:'',
+  mail:{zh:{s:'很高興認識您｜{company}',b:'{name} 您好：\n\n很高興今天與您交換名片，期待後續有機會合作。若有任何需求，歡迎隨時與我聯繫。\n\n{me}'},
+        en:{s:'Nice to meet you, {name}',b:'Dear {name},\n\nIt was a pleasure meeting you today. I look forward to exploring opportunities to work together. Please feel free to contact me anytime.\n\nBest regards,\n{me}'}}};
+const S=Object.assign({},DEF,lsGet('cs_settings',{}));
+const saveS=()=>lsSet('cs_settings',S);
+const getKey=()=>{try{return localStorage.getItem('cv_apikey')||''}catch(e){return ''}};
+
+// ───────── countries ─────────
+const CTRY='TW|台灣|Taiwan,CN|中國|China,HK|香港|Hong Kong,MO|澳門|Macau,JP|日本|Japan,KR|韓國|South Korea,TH|泰國|Thailand,VN|越南|Vietnam,MY|馬來西亞|Malaysia,SG|新加坡|Singapore,ID|印尼|Indonesia,PH|菲律賓|Philippines,MM|緬甸|Myanmar,KH|柬埔寨|Cambodia,LA|寮國|Laos,IN|印度|India,BD|孟加拉|Bangladesh,LK|斯里蘭卡|Sri Lanka,PK|巴基斯坦|Pakistan,AE|阿聯|UAE,SA|沙烏地阿拉伯|Saudi Arabia,TR|土耳其|Turkey,IL|以色列|Israel,DE|德國|Germany,GB|英國|United Kingdom,FR|法國|France,IT|義大利|Italy,ES|西班牙|Spain,NL|荷蘭|Netherlands,CH|瑞士|Switzerland,SE|瑞典|Sweden,PL|波蘭|Poland,CZ|捷克|Czechia,AT|奧地利|Austria,BE|比利時|Belgium,RU|俄羅斯|Russia,US|美國|United States,CA|加拿大|Canada,MX|墨西哥|Mexico,BR|巴西|Brazil,AU|澳洲|Australia,NZ|紐西蘭|New Zealand,ZA|南非|South Africa,EG|埃及|Egypt'
+  .split(',').map(x=>{const[c,zh,en]=x.split('|');return{c,zh,en}});
+const flag=c=>c&&c.length===2?String.fromCodePoint(...[...c.toUpperCase()].map(x=>127397+x.charCodeAt(0))):'🌐';
+const cName=(c,lang)=>{if(!c)return'';const o=CTRY.find(x=>x.c===c);if(!o)return c;return lang==='bi'?o.zh+' '+o.en:o[lang==='en'?'en':'zh']};
+
+// ───────── IndexedDB ─────────
+let db=null, CARDS=[];
+function idb(mode,fn){return new Promise((res,rej)=>{const t=db.transaction('cards',mode);const st=t.objectStore('cards');const r=fn(st);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})}
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('cardscanner',1);r.onupgradeneeded=()=>r.result.createObjectStore('cards',{keyPath:'id'});r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+async function putCard(c){c.updatedAt=new Date().toISOString();const i=CARDS.findIndex(x=>x.id===c.id);if(i<0)CARDS.unshift(c);else CARDS[i]=c;if(db)await idb('readwrite',s=>s.put(c));}
+async function rmCard(id){CARDS=CARDS.filter(x=>x.id!==id);if(db)await idb('readwrite',s=>s.delete(id));}
+const byId=id=>CARDS.find(x=>x.id===id);
+const blank=()=>({id:uid(),createdAt:new Date().toISOString(),name_zh:'',name_en:'',title_zh:'',title_en:'',company_zh:'',company_en:'',email:'',phone:'',mobile:'',website:'',address_zh:'',address_en:'',country:'',tags:[],folder:'',notes:'',status:'new',tr:[],img:'',imgBack:''});
+
+async function migrateOld(){ // 舊版 CardVault (localStorage cv_cards)
+  if(lsGet('cs_migrated',false))return;
+  const old=lsGet('cv_cards',[]);
+  for(const o of (Array.isArray(old)?old:[])){
+    if(byId(o.id))continue;
+    const c=blank();c.id=o.id||uid();c.createdAt=o.savedAt||c.createdAt;c.status='ok';
+    for(const k of['name','title','company','address']){const v=(o[k]||'').trim();if(v)c[k+(hasCJK(v)?'_zh':'_en')]=v}
+    c.email=o.email||'';c.phone=o.phone||'';c.country=o.country&&o.country!=='OTHER'?o.country:'';c.notes=o.notes||'';
+    if(o.image)c.img=o.image;
+    await putCard(c);
+  }
+  lsSet('cs_migrated',true);
+}
+
+// ───────── image prep ─────────
+function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=()=>{URL.revokeObjectURL(u);rej(new Error(T('imgErr')))};i.src=u})}
+function shrink(img,max,q){const w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height,s=Math.min(1,max/Math.max(w0,h0));const c=document.createElement('canvas');c.width=Math.round(w0*s);c.height=Math.round(h0*s);const x=c.getContext('2d');x.drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)}
+async function prep(file){const img=await loadImg(file);return{big:shrink(img,1280,.8),thumb:shrink(img,900,.72)}}
+
+// ───────── Claude ─────────
+const PROMPT=`Read this business card (the images are its front and, if given, back) and return ONLY one JSON object, no markdown:
+{"name_zh":"","name_en":"","title_zh":"","title_en":"","company_zh":"","company_en":"","email":"","phone":"","mobile":"","website":"","address_zh":"","address_en":"","country":"","translated":[]}
+Rules:
+- *_zh = Chinese, *_en = English. If the card prints both languages, copy each exactly as printed (keep Simplified/Traditional as printed).
+- If title, company or address is printed in only one language, fill the other by translating it (translate into Traditional Chinese for *_zh). For company names prefer a name printed anywhere on the card (logo, slogan); the website/email domain is a hint. Put every key you filled by translation into "translated".
+- Person name: never invent a Chinese name; if none is printed, copy the printed name into name_zh. If only a Chinese name is printed, romanize it in Western order (given name, then family name) into name_en and add "name_en" to "translated".
+- Cards in Thai, Japanese, Korean, Vietnamese etc.: English in *_en, Traditional Chinese in *_zh (both may be translations).
+- phone = office/landline, mobile = cell phone. Keep the printed format and country code. Several numbers: join with " / ". Put fax into nothing.
+- country = ISO 3166-1 alpha-2 code inferred from address, phone prefix or language; "" if unknown.
+- Unknown fields = "". Output JSON only.`;
+async function callAI(images,attempt=0){
+  const key=getKey();if(!key)throw new Error(T('noKey'));
+  const content=images.filter(Boolean).map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d.split(',')[1]}}));
+  content.push({type:'text',text:PROMPT});
+  let r;
+  try{
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:S.model,max_tokens:1024,messages:[{role:'user',content}]})});
+  }catch(e){if(attempt<2){await sleep(1200*(attempt+1));return callAI(images,attempt+1)}throw e}
+  if((r.status===429||r.status>=500)&&attempt<3){await sleep(1500*(attempt+1));return callAI(images,attempt+1)}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(r.status===401?T('badKey'):(j.error&&j.error.message)||('HTTP '+r.status));
+  const txt=(j.content||[]).map(b=>b.text||'').join('');
+  const a=txt.indexOf('{'),b=txt.lastIndexOf('}');
+  if(a<0||b<a)throw new Error(T('parseErr'));
+  try{return JSON.parse(txt.slice(a,b+1))}catch(e){throw new Error(T('parseErr'))}
+}
+const FK=['name_zh','name_en','title_zh','title_en','company_zh','company_en','email','phone','mobile','website','address_zh','address_en','country'];
+function applyAI(c,d,onlyEmpty){
+  const tr=new Set(onlyEmpty?c.tr:[]);
+  for(const k of FK){const v=typeof d[k]==='string'?d[k].trim():'';if(!v)continue;if(onlyEmpty&&c[k])continue;c[k]=k==='country'?v.toUpperCase().slice(0,2):v;
+    if((d.translated||[]).includes(k))tr.add(k);else tr.delete(k)}
+  c.tr=[...tr];return c;
+}
+function findDup(c){
+  const em=(c.email||'').toLowerCase(), ph=[c.mobile,c.phone].map(x=>digits(x).slice(-8)).filter(x=>x.length>=7);
+  const o=CARDS.find(x=>x.id!==c.id&&((em&&(x.email||'').toLowerCase()===em)||ph.some(p=>[x.mobile,x.phone].some(y=>digits(y).slice(-8)===p))));
+  return o?o.id:'';
+}
+
+// ───────── batch queue ─────────
+const Q=[];let running=0,prepChain=Promise.resolve();const CONC=4;
+function addFiles(list){
+  const files=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name));
+  if(!files.length)return;
+  if(!getKey()){go('set');toast(T('noKey'));return}
+  for(const f of files){const job={id:uid(),st:'prep',file:f};Q.push(job);prepChain=prepChain.then(()=>prepJob(job))}
+  renderQ();
+}
+async function prepJob(job){
+  try{const p=await prep(job.file);job.big=p.big;job.thumb=p.thumb;job.st='wait'}catch(e){job.st='err';job.err=T('imgErr')}
+  job.file=null;renderQ();pump();
+}
+function pump(){while(running<CONC){const j=Q.find(x=>x.st==='wait');if(!j)break;runJob(j)}}
+async function runJob(job){
+  running++;job.st='run';job.t0=performance.now();renderQ();
+  try{
+    const d=await callAI([job.big]);
+    const c=applyAI(blank(),d);c.img=job.thumb;c.folder=S.bFolder||'';c.tags=[...(S.bTags||[])];c.dup=findDup(c);
+    await putCard(c);job.cardId=c.id;job.st='done';job.sec=((performance.now()-job.t0)/1000).toFixed(1);job.big=null;
+  }catch(e){job.st='err';job.err=e.message||String(e)}
+  running--;renderQ();refresh();pump();
+}
+function tapJob(id){const j=Q.find(x=>x.id===id);if(!j)return;
+  if(j.st==='done'&&byId(j.cardId))openEd(j.cardId);
+  else if(j.st==='err'){if(j.big){j.st='wait';j.err='';renderQ();pump()}else{Q.splice(Q.indexOf(j),1);renderQ()}}}
+function clearQ(){for(let i=Q.length-1;i>=0;i--)if(Q[i].st==='done'||Q[i].st==='err')Q.splice(i,1);renderQ()}
+function renderQ(){
+  $('#qWrap').hidden=!Q.length;
+  const d=Q.filter(x=>x.st==='done').length,e=Q.filter(x=>x.st==='err').length;
+  $('#qStat').innerHTML=`<b>${T('qStat',{d,t:Q.length})}</b>${e?T('qErr',{e}):''}`;
+  $('#qProg').style.width=(Q.length?((d+e)/Q.length*100):0)+'%';
+  $('#qList').innerHTML=Q.slice().reverse().map(j=>{
+    const c=j.cardId&&byId(j.cardId);
+    let main,st;
+    if(j.st==='done'&&c){main=`<div class="n">${esc(c.name_zh||c.name_en||'—')}${c.name_en&&c.name_en!==c.name_zh?`<span class="en">${esc(c.name_en)}</span>`:''}</div><div class="s">${esc([c.title_zh||c.title_en,c.company_zh||c.company_en].filter(Boolean).join(' · '))}</div>`;
+      st=c.dup?`<span class="tag-p tag-d">${T('dupB')}</span>`:c.status==='new'?`<span class="st ok">✓ ${j.sec}s</span>`:`<span class="st ok">✓</span>`}
+    else{main=`<div class="s">${j.st==='err'?esc(j.err):''}</div>`;
+      st=j.st==='run'?`<span class="st run"><i class="spin"></i>${T('stRun')}</span>`:j.st==='err'?`<span class="st err">${T('stErr')}</span>`:`<span class="st">${T(j.st==='prep'?'stPrep':'stWait')}</span>`}
+    return `<div class="row" onclick="tapJob('${j.id}')">${j.thumb?`<img class="th" src="${j.thumb}">`:'<div class="th"></div>'}<div class="ci">${main}</div>${st}</div>`;
+  }).join('');
+  refreshRev();
+}
+function refreshRev(){const n=CARDS.filter(c=>c.status==='new').length;const b=$('#revBtn');b.hidden=!n;b.textContent=T('review',{n})}
+
+// ───────── list ─────────
+function tagCls(t){const i=S.tags.indexOf(t);let h=0;for(const ch of t)h=(h*31+ch.charCodeAt(0))>>>0;return 'c'+((i>=0?i:h)%6)}
+let fTag='';
+function renderFilters(){
+  const pend=CARDS.filter(c=>c.status==='new').length;
+  const ch=[['',T('all')]];if(pend)ch.push(['__new',`${T('pending')} ${pend}`]);
+  S.tags.forEach(t=>ch.push([t,t]));
+  $('#fChips').innerHTML=ch.map(([v,l])=>`<button class="chip ${v&&v!=='__new'?tagCls(v):''} ${fTag===v?'sel':''}" onclick="fTag='${esc(v)}';renderFilters();renderList()">${esc(l)}</button>`).join('');
+  const fv=$('#fFolder').value;
+  $('#fFolder').innerHTML=`<option value="*">${T('folder')}：${T('all')}</option><option value="">${T('uncat')}</option>`+S.folders.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  $('#fFolder').value=fv||'*';if($('#fFolder').selectedIndex<0)$('#fFolder').value='*';
+  const sv=$('#fSort').value;
+  $('#fSort').innerHTML=[['new','sNew'],['co','sCo'],['ct','sCt'],['nm','sName']].map(([v,k])=>`<option value="${v}">${T(k)}</option>`).join('');
+  $('#fSort').value=sv||'new';
+}
+function filtered(){
+  const q=$('#q').value.trim().toLowerCase(), fo=$('#fFolder').value;
+  return CARDS.filter(c=>{
+    if(fTag==='__new'&&c.status!=='new')return false;
+    if(fTag&&fTag!=='__new'&&!(c.tags||[]).includes(fTag))return false;
+    if(fo!=='*'&&fo!=null&&(c.folder||'')!==fo)return false;
+    if(q){const h=[...FK.map(k=>c[k]),c.notes,(c.tags||[]).join(' '),cName(c.country,'bi')].join(' ').toLowerCase();if(!h.includes(q)&&!(digits(q).length>=4&&(digits(c.phone)+' '+digits(c.mobile)).includes(digits(q))))return false}
+    return true;
   });
-  document.getElementById('lang-btn').textContent = lang === 'zh' ? 'EN' : '中';
-  document.getElementById('login-subtitle').textContent = t('login_subtitle');
-  document.getElementById('lbl-username').textContent = t('lbl_username');
-  document.getElementById('lbl-password').textContent = t('lbl_password');
-  document.getElementById('search-input').placeholder = t('search_ph');
-  // Update filter placeholders
-  const contSel = document.getElementById('continent-filter');
-  if (contSel && contSel.options[0]) contSel.options[0].textContent = lang==='zh'?'🌏 全部洲':'🌏 All Continents';
-  const ctrSel = document.getElementById('country-filter');
-  if (ctrSel && ctrSel.options[0]) ctrSel.options[0].textContent = lang==='zh'?'全部國家':'All Countries';
 }
-function toggleLang() {
-  lang = lang === 'zh' ? 'en' : 'zh';
-  localStorage.setItem('cv_lang', lang);
-  // Save current filter selections
-  const savedCont = document.getElementById('continent-filter').value;
-  const savedCtr  = document.getElementById('country-filter').value;
-  applyLang();
-  populateCountrySelect();
-  populateBrowseFilters(savedCont, savedCtr);
-  renderBrowse();
+function rowHTML(c){
+  const nm=c.name_zh||c.name_en||'—';
+  return `<div class="row" onclick="openEd('${c.id}')">${c.img?`<img class="th" src="${c.img}" loading="lazy">`:'<div class="th"></div>'}
+  <div class="ci"><div class="n">${esc(nm)}${c.name_en&&c.name_en!==nm?`<span class="en">${esc(c.name_en)}</span>`:''}</div>
+  <div class="s">${esc([c.title_zh||c.title_en,c.company_zh||c.company_en].filter(Boolean).join(' · '))}</div>
+  ${(c.tags||[]).length?`<div class="tg">${c.tags.map(t=>`<span class="chip ${tagCls(t)}">${esc(t)}</span>`).join('')}</div>`:''}</div>
+  ${c.dup&&byId(c.dup)?`<span class="tag-p tag-d">${T('dupB')}</span>`:c.status==='new'?`<span class="tag-p">${T('pending')}</span>`:''}</div>`;
 }
-
-// ══════════════════════════════════════════
-// STORAGE — single user, fixed key
-// ══════════════════════════════════════════
-function getCards() { return JSON.parse(localStorage.getItem('cv_cards') || '[]'); }
-function saveCards(arr) { localStorage.setItem('cv_cards', JSON.stringify(arr)); }
-function getApiKey() { return localStorage.getItem('cv_apikey') || ''; }
-function loadApiKey() { document.getElementById('api-key-input').value = getApiKey(); }
-function saveApiKey() {
-  const k = document.getElementById('api-key-input').value.trim();
-  localStorage.setItem('cv_apikey', k);
-  showStatus(lang==='zh'?'API 金鑰已儲存 ✓':'API key saved ✓', 'success');
+function renderList(){
+  if(!$('#fSort').options.length)renderFilters();
+  const srt=$('#fSort').value, arr=filtered();
+  const key={co:c=>(c.company_en||c.company_zh||'').toLowerCase(),nm:c=>(c.name_en||c.name_zh||'').toLowerCase(),ct:c=>cName(c.country,'en')||'~'};
+  if(srt==='new')arr.sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));else arr.sort((a,b)=>key[srt](a).localeCompare(key[srt](b)));
+  $('#lCnt').textContent=T('cards',{n:arr.length});
+  if(!arr.length){$('#list').innerHTML=`<div class="empty"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M14 10h4M14 13.5h3"/></svg><div>${T(CARDS.length?'noMatch':'empty')}</div></div>`;return}
+  let html='',g=null;
+  for(const c of arr){
+    if(srt==='ct'){const gg=c.country||'';if(gg!==g){g=gg;html+=`<div class="grp">${flag(gg)} ${esc(cName(gg,S.lang)||T('uncat'))}</div>`}}
+    if(srt==='co'){const gg=(c.company_zh||c.company_en||'—');if(gg!==g){g=gg;html+=`<div class="grp">${esc(gg)}</div>`}}
+    html+=rowHTML(c);
+  }
+  $('#list').innerHTML=html;
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  loadApiKey();
-  populateCountrySelect();
-  populateBrowseFilters();
-  updateSettingsCount();
-  applyLang();
+// ───────── editor ─────────
+let edId=null,saveT=null;
+const cur=()=>byId(edId);
+function folderOpts(sel){sel.innerHTML=`<option value="">${T('uncat')}</option>`+S.folders.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('')+`<option value="__add">＋ ${T('newFolder').replace(/（.*|\s\(.*/,'')}…</option>`}
+function openEd(id){
+  const c=byId(id);if(!c)return;edId=id;
+  $('#eImg').src=c.img||'';
+  $('#eBack').hidden=!c.imgBack;$('#eBack').src=c.imgBack||'';
+  folderOpts($('#eFolder'));
+  $('#eCountry').innerHTML=`<option value="">${T('country')}…</option>`+CTRY.map(o=>`<option value="${o.c}">${flag(o.c)} ${S.lang==='en'?o.en:o.zh+' '+o.en}</option>`).join('')+(c.country&&!CTRY.find(o=>o.c===c.country)?`<option value="${esc(c.country)}">${flag(c.country)} ${esc(c.country)}</option>`:'');
+  $$('#ed [data-k]').forEach(el=>{el.value=c[el.dataset.k]||'';el.classList.toggle('tr',(c.tr||[]).includes(el.dataset.k))});
+  $('#eTr').hidden=!(c.tr||[]).length;
+  const d=c.dup&&byId(c.dup);$('#eDup').hidden=!d;if(d)$('#eDupT').textContent=T('dup',{n:d.name_zh||d.name_en||d.email});
+  renderEdTags();
+  const pend=CARDS.filter(x=>x.status==='new').sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));const i=pend.findIndex(x=>x.id===id);
+  $('#edPos').textContent=c.status==='new'&&pend.length?`${i+1} / ${pend.length}`:'';
+  $('#ed').hidden=false;$('#ed .sh-body').scrollTop=0;document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>$$('#ed textarea.ln').forEach(autoH));
+}
+function autoH(t){t.style.height='auto';t.style.height=t.scrollHeight+'px'}
+function closeEd(){flushSave();$('#ed').hidden=true;edId=null;document.body.style.overflow='';refresh()}
+function schedSave(){clearTimeout(saveT);saveT=setTimeout(flushSave,400)}
+function flushSave(){clearTimeout(saveT);const c=cur();if(c)putCard(c)}
+document.addEventListener('input',e=>{const el=e.target;if(!el.closest('#ed')||!el.dataset.k)return;const c=cur();if(!c)return;
+  if(el.dataset.k==='folder'&&el.value==='__add')return;
+  c[el.dataset.k]=el.value;if((c.tr||[]).includes(el.dataset.k)){c.tr=c.tr.filter(k=>k!==el.dataset.k);el.classList.remove('tr')}
+  if(el.tagName==='TEXTAREA')autoH(el);schedSave()});
+$('#eFolder').addEventListener('change',e=>{const c=cur();if(!c)return;if(e.target.value==='__add'){const n=(prompt(T('newFolder'))||'').trim();if(n&&!S.folders.includes(n)){S.folders.push(n);saveS()}folderOpts(e.target);e.target.value=n||c.folder||'';c.folder=e.target.value;schedSave()}});
+function renderEdTags(){const c=cur();if(!c)return;const on=c.tags||[];
+  $('#eTagsOn').innerHTML=on.map(t=>`<button class="chip ${tagCls(t)}" onclick="edTag('${esc(t)}')">${esc(t)}<span class="xx">×</span></button>`).join('');
+  $('#eTagsAll').innerHTML=S.tags.filter(t=>!on.includes(t)).map(t=>`<button class="chip ${tagCls(t)}" onclick="edTag('${esc(t)}')">${esc(t)}</button>`).join('')}
+function edTag(t){const c=cur();c.tags=c.tags||[];c.tags=c.tags.includes(t)?c.tags.filter(x=>x!==t):[...c.tags,t];renderEdTags();schedSave()}
+function edAddTag(){const v=$('#eTagIn').value.trim();if(!v)return;if(!S.tags.includes(v)){S.tags.push(v);saveS()}const c=cur();if(!c.tags.includes(v))c.tags.push(v);$('#eTagIn').value='';renderEdTags();schedSave()}
+function nextPending(){const pend=CARDS.filter(x=>x.status==='new'&&x.id!==edId).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));return pend[0]}
+function edNext(){flushSave();const n=nextPending();if(n)openEd(n.id);else{closeEd();toast(T('allDone'))}}
+async function edDone(){const c=cur();c.status='ok';await putCard(c);const n=nextPending();if(n)openEd(n.id);else{closeEd();if(Q.length||$('#t-list').classList.contains('on'))toast(T('allDone'))}}
+function reviewNext(){const pend=CARDS.filter(x=>x.status==='new').sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));if(pend[0])openEd(pend[0].id)}
+async function delCur(){const c=cur();if(!c||!confirm(T('cDel')))return;const n=nextPending();await rmCard(c.id);CARDS.forEach(x=>{if(x.dup===c.id)x.dup=''});toast(T('deleted'));if(n&&c.status==='new')openEd(n.id);else closeEd();renderQ()}
+function dial(k){const c=cur();const v=(c[k]||'').split('/')[0].replace(/[^\d+]/g,'');if(!v)return toast(T('noPhone'));location.href='tel:'+v}
+function viewImg(k){const c=cur();if(!c||!c[k])return;const d=document.createElement('div');d.className='viewer';d.innerHTML=`<img src="${c[k]}">`;d.onclick=()=>d.remove();document.body.appendChild(d)}
+function edMail(){
+  flushSave();const c=cur();if(!c.email)return toast(T('noEmail'));
+  const zh=['TW','CN','HK','MO'].includes(c.country)||(!c.country&&hasCJK(c.name_zh));
+  const lang=zh?'zh':'en',tp=S.mail[lang]||DEF.mail[lang];
+  const nm=zh?(c.name_zh||c.name_en):(c.name_en||c.name_zh), co=zh?(c.company_zh||c.company_en):(c.company_en||c.company_zh);
+  const f=s=>(s||'').split('{name}').join(nm||'').split('{company}').join(co||'').split('{me}').join(S.me||'');
+  location.href=`mailto:${encodeURIComponent(c.email.split(/[\s,;/]/)[0])}?subject=${encodeURIComponent(f(tp.s))}&body=${encodeURIComponent(f(tp.b))}`;
+}
+$('#inBack').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';const c=cur();if(!f||!c)return;
+  try{const p=await prep(f);c.imgBack=p.thumb;$('#eBack').src=p.thumb;$('#eBack').hidden=false;await putCard(c);
+    toast(T('working'),4000);const d=await callAI([c.img,p.big]);
+    if(edId===c.id){flushSave()}applyAI(c,d,true);await putCard(c);if(edId===c.id)openEd(c.id);toast(T('backMerged'))}
+  catch(err){toast(err.message||String(err),3500)}
 });
-
-// ══════════════════════════════════════════
-// COUNTRY DATA — by continent
-// ══════════════════════════════════════════
-const CONTINENTS = [
-  { code:'AS', zh:'亞洲', en:'Asia', flag:'🌏' },
-  { code:'EU', zh:'歐洲', en:'Europe', flag:'🌍' },
-  { code:'AM', zh:'美洲', en:'Americas', flag:'🌎' },
-  { code:'AF', zh:'非洲', en:'Africa', flag:'🌍' },
-  { code:'OC', zh:'大洋洲', en:'Oceania', flag:'🌏' },
-  { code:'OTHER', zh:'其他', en:'Other', flag:'🌐' },
-];
-const COUNTRIES = [
-  // Asia
-  {code:'TW',flag:'🇹🇼',zh:'台灣',en:'Taiwan',continent:'AS'},
-  {code:'CN',flag:'🇨🇳',zh:'中國',en:'China',continent:'AS'},
-  {code:'HK',flag:'🇭🇰',zh:'香港',en:'Hong Kong',continent:'AS'},
-  {code:'MO',flag:'🇲🇴',zh:'澳門',en:'Macau',continent:'AS'},
-  {code:'JP',flag:'🇯🇵',zh:'日本',en:'Japan',continent:'AS'},
-  {code:'KR',flag:'🇰🇷',zh:'韓國',en:'South Korea',continent:'AS'},
-  {code:'TH',flag:'🇹🇭',zh:'泰國',en:'Thailand',continent:'AS'},
-  {code:'VN',flag:'🇻🇳',zh:'越南',en:'Vietnam',continent:'AS'},
-  {code:'MY',flag:'🇲🇾',zh:'馬來西亞',en:'Malaysia',continent:'AS'},
-  {code:'SG',flag:'🇸🇬',zh:'新加坡',en:'Singapore',continent:'AS'},
-  {code:'ID',flag:'🇮🇩',zh:'印尼',en:'Indonesia',continent:'AS'},
-  {code:'PH',flag:'🇵🇭',zh:'菲律賓',en:'Philippines',continent:'AS'},
-  {code:'MM',flag:'🇲🇲',zh:'緬甸',en:'Myanmar',continent:'AS'},
-  {code:'KH',flag:'🇰🇭',zh:'柬埔寨',en:'Cambodia',continent:'AS'},
-  {code:'LA',flag:'🇱🇦',zh:'寮國',en:'Laos',continent:'AS'},
-  {code:'IN',flag:'🇮🇳',zh:'印度',en:'India',continent:'AS'},
-  {code:'BD',flag:'🇧🇩',zh:'孟加拉',en:'Bangladesh',continent:'AS'},
-  {code:'LK',flag:'🇱🇰',zh:'斯里蘭卡',en:'Sri Lanka',continent:'AS'},
-  {code:'PK',flag:'🇵🇰',zh:'巴基斯坦',en:'Pakistan',continent:'AS'},
-  {code:'AE',flag:'🇦🇪',zh:'阿聯酋',en:'UAE',continent:'AS'},
-  {code:'SA',flag:'🇸🇦',zh:'沙烏地阿拉伯',en:'Saudi Arabia',continent:'AS'},
-  {code:'TR',flag:'🇹🇷',zh:'土耳其',en:'Turkey',continent:'AS'},
-  {code:'IL',flag:'🇮🇱',zh:'以色列',en:'Israel',continent:'AS'},
-  {code:'UZ',flag:'🇺🇿',zh:'烏茲別克',en:'Uzbekistan',continent:'AS'},
-  {code:'KZ',flag:'🇰🇿',zh:'哈薩克',en:'Kazakhstan',continent:'AS'},
-  // Europe
-  {code:'DE',flag:'🇩🇪',zh:'德國',en:'Germany',continent:'EU'},
-  {code:'GB',flag:'🇬🇧',zh:'英國',en:'United Kingdom',continent:'EU'},
-  {code:'FR',flag:'🇫🇷',zh:'法國',en:'France',continent:'EU'},
-  {code:'IT',flag:'🇮🇹',zh:'義大利',en:'Italy',continent:'EU'},
-  {code:'ES',flag:'🇪🇸',zh:'西班牙',en:'Spain',continent:'EU'},
-  {code:'NL',flag:'🇳🇱',zh:'荷蘭',en:'Netherlands',continent:'EU'},
-  {code:'CH',flag:'🇨🇭',zh:'瑞士',en:'Switzerland',continent:'EU'},
-  {code:'SE',flag:'🇸🇪',zh:'瑞典',en:'Sweden',continent:'EU'},
-  {code:'NO',flag:'🇳🇴',zh:'挪威',en:'Norway',continent:'EU'},
-  {code:'DK',flag:'🇩🇰',zh:'丹麥',en:'Denmark',continent:'EU'},
-  {code:'FI',flag:'🇫🇮',zh:'芬蘭',en:'Finland',continent:'EU'},
-  {code:'PL',flag:'🇵🇱',zh:'波蘭',en:'Poland',continent:'EU'},
-  {code:'CZ',flag:'🇨🇿',zh:'捷克',en:'Czech Republic',continent:'EU'},
-  {code:'AT',flag:'🇦🇹',zh:'奧地利',en:'Austria',continent:'EU'},
-  {code:'BE',flag:'🇧🇪',zh:'比利時',en:'Belgium',continent:'EU'},
-  {code:'PT',flag:'🇵🇹',zh:'葡萄牙',en:'Portugal',continent:'EU'},
-  {code:'RU',flag:'🇷🇺',zh:'俄羅斯',en:'Russia',continent:'EU'},
-  {code:'UA',flag:'🇺🇦',zh:'烏克蘭',en:'Ukraine',continent:'EU'},
-  {code:'RS',flag:'🇷🇸',zh:'塞爾維亞',en:'Serbia',continent:'EU'},
-  {code:'HR',flag:'🇭🇷',zh:'克羅埃西亞',en:'Croatia',continent:'EU'},
-  {code:'SK',flag:'🇸🇰',zh:'斯洛伐克',en:'Slovakia',continent:'EU'},
-  {code:'HU',flag:'🇭🇺',zh:'匈牙利',en:'Hungary',continent:'EU'},
-  {code:'RO',flag:'🇷🇴',zh:'羅馬尼亞',en:'Romania',continent:'EU'},
-  {code:'GR',flag:'🇬🇷',zh:'希臘',en:'Greece',continent:'EU'},
-  // Americas
-  {code:'US',flag:'🇺🇸',zh:'美國',en:'United States',continent:'AM'},
-  {code:'CA',flag:'🇨🇦',zh:'加拿大',en:'Canada',continent:'AM'},
-  {code:'MX',flag:'🇲🇽',zh:'墨西哥',en:'Mexico',continent:'AM'},
-  {code:'BR',flag:'🇧🇷',zh:'巴西',en:'Brazil',continent:'AM'},
-  {code:'AR',flag:'🇦🇷',zh:'阿根廷',en:'Argentina',continent:'AM'},
-  {code:'CL',flag:'🇨🇱',zh:'智利',en:'Chile',continent:'AM'},
-  {code:'CO',flag:'🇨🇴',zh:'哥倫比亞',en:'Colombia',continent:'AM'},
-  {code:'PE',flag:'🇵🇪',zh:'秘魯',en:'Peru',continent:'AM'},
-  // Africa
-  {code:'ZA',flag:'🇿🇦',zh:'南非',en:'South Africa',continent:'AF'},
-  {code:'NG',flag:'🇳🇬',zh:'奈及利亞',en:'Nigeria',continent:'AF'},
-  {code:'EG',flag:'🇪🇬',zh:'埃及',en:'Egypt',continent:'AF'},
-  {code:'KE',flag:'🇰🇪',zh:'肯亞',en:'Kenya',continent:'AF'},
-  {code:'ET',flag:'🇪🇹',zh:'衣索比亞',en:'Ethiopia',continent:'AF'},
-  {code:'GH',flag:'🇬🇭',zh:'迦納',en:'Ghana',continent:'AF'},
-  // Oceania
-  {code:'AU',flag:'🇦🇺',zh:'澳洲',en:'Australia',continent:'OC'},
-  {code:'NZ',flag:'🇳🇿',zh:'紐西蘭',en:'New Zealand',continent:'OC'},
-  // Other
-  {code:'OTHER',flag:'🌐',zh:'其他',en:'Other',continent:'OTHER'},
-];
-function countryByCode(code) { return COUNTRIES.find(c=>c.code===code) || {code,flag:'🌐',zh:code,en:code,continent:'OTHER'}; }
-function countryName(c) { return lang==='zh' ? c.zh : c.en; }
-function continentName(c) { return lang==='zh' ? c.zh : c.en; }
-
-// Populate scan-tab country select (flat with optgroup by continent)
-function populateCountrySelect() {
-  const sel = document.getElementById('f-country');
-  sel.innerHTML = `<option value="">${lang==='zh'?'-- 選擇國家 --':'-- Select Country --'}</option>`;
-  CONTINENTS.forEach(cont => {
-    const countries = COUNTRIES.filter(c => c.continent === cont.code);
-    if (!countries.length) return;
-    const grp = document.createElement('optgroup');
-    grp.label = `${cont.flag} ${continentName(cont)}`;
-    countries.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.code;
-      opt.textContent = `${c.flag} ${c.zh} / ${c.en}`;
-      grp.appendChild(opt);
-    });
-    sel.appendChild(grp);
-  });
+async function rescan(){
+  flushSave();const c=cur();if(!c||!c.img)return toast(T('noImg'));
+  toast(T('working'),4000);
+  try{const d=await callAI([c.img,c.imgBack]);applyAI(c,d,false);c.dup=findDup(c);await putCard(c);if(edId===c.id)openEd(c.id);toast(T('rescanDone'))}
+  catch(err){toast(err.message||String(err),3500)}
 }
 
-// Populate browse filter — two cascading selects
-function populateBrowseFilters(savedCont='', savedCtr='') {
-  const contSel = document.getElementById('continent-filter');
-  contSel.innerHTML = `<option value="">${lang==='zh'?'🌏 全部洲':'🌏 All Continents'}</option>`;
-  CONTINENTS.forEach(cont => {
-    const opt = document.createElement('option');
-    opt.value = cont.code;
-    opt.textContent = `${cont.flag} ${continentName(cont)}`;
-    contSel.appendChild(opt);
-  });
-  if (savedCont) contSel.value = savedCont;
-  updateCountryFilter(savedCtr);
+// ───────── export ─────────
+const COLS=[['name','姓名','Name'],['title','職稱','Title'],['company','公司','Company'],['phone','電話','Phone'],['mobile','手機','Mobile'],['email','Email','Email'],['website','網站','Website'],['address','地址','Address'],['country','國家','Country'],['tags','標籤','Tags'],['folder','資料夾','Folder'],['notes','備註','Notes'],['createdAt','建立日期','Created']];
+const BI=['name','title','company','address'];
+function val(c,k,lang){
+  if(BI.includes(k)){const o=lang==='en'?'zh':'en';return c[k+'_'+lang]||c[k+'_'+o]||''}
+  if(k==='country')return cName(c.country,lang);
+  if(k==='tags')return(c.tags||[]).join(', ');
+  if(k==='createdAt')return(c.createdAt||'').slice(0,10);
+  return c[k]||'';
 }
-
-function updateCountryFilter(savedCtr='') {
-  const contCode = document.getElementById('continent-filter').value;
-  const ctrSel = document.getElementById('country-filter');
-  const prev = savedCtr || ctrSel.value;
-  ctrSel.innerHTML = `<option value="">${lang==='zh'?'全部國家':'All Countries'}</option>`;
-  const list = contCode ? COUNTRIES.filter(c=>c.continent===contCode) : COUNTRIES;
-  list.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.code;
-    opt.textContent = `${c.flag} ${countryName(c)}`;
-    ctrSel.appendChild(opt);
-  });
-  if (prev && [...ctrSel.options].some(o=>o.value===prev)) ctrSel.value = prev;
-  renderBrowse();
+function table(cards,lang){
+  if(lang!=='bi')return[COLS.map(x=>lang==='en'?x[2]:x[1]),...cards.map(c=>COLS.map(x=>val(c,x[0],lang)))];
+  const head=[],get=[];
+  for(const[k,zh,en]of COLS){if(BI.includes(k)){head.push(zh,en);get.push(c=>c[k+'_zh']||'',c=>c[k+'_en']||'')}else{head.push(zh===en?zh:`${zh} ${en}`);get.push(c=>val(c,k,k==='country'?'bi':'en'))}}
+  return[head,...cards.map(c=>get.map(g=>g(c)))];
 }
-
-// ══════════════════════════════════════════
-// FILE / CAMERA INPUT
-// ══════════════════════════════════════════
-let currentImageBase64 = null;
-let currentImageType = 'image/jpeg';
-function handleFile(e) { processFile(e.target.files[0]); }
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('scan-area').classList.remove('drag-over');
-  processFile(e.dataTransfer.files[0]);
+let XL={lang:'bi',fmt:'xlsx'};
+function scopeCards(){
+  const v=$('#xScope').value||'all';let a=CARDS.slice();
+  if(v==='new')a=a.filter(c=>c.status==='new');
+  else if(v==='today')a=a.filter(c=>(c.createdAt||'').slice(0,10)===today());
+  else if(v.startsWith('f:'))a=a.filter(c=>(c.folder||'')===v.slice(2));
+  else if(v.startsWith('t:'))a=a.filter(c=>(c.tags||[]).includes(v.slice(2)));
+  return a.sort((x,y)=>(y.createdAt||'').localeCompare(x.createdAt||''));
 }
-function processFile(file) {
-  if (!file) return;
-  currentImageType = 'image/jpeg';
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      // Resize to max 1600px on longest side, compress to JPEG
-      const MAX = 1600;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else { w = Math.round(w * MAX / h); h = MAX; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      // Compress at 0.85 quality
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      const b64 = dataUrl.split(',')[1];
-      currentImageBase64 = b64;
-      document.getElementById('preview-img').src = dataUrl;
-      document.getElementById('img-preview').style.display = 'block';
-      document.getElementById('result-card').style.display = 'none';
-      scanWithAI(b64);
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
+function renderExp(){
+  const sv=$('#xScope').value;
+  $('#xScope').innerHTML=`<option value="all">${T('xAll')} (${CARDS.length})</option><option value="today">${T('xNew')}</option><option value="new">${T('xPend')}</option>`+
+    `<option value="f:">${T('folder')}：${T('uncat')}</option>`+S.folders.map(f=>`<option value="f:${esc(f)}">${T('folder')}：${esc(f)}</option>`).join('')+
+    S.tags.map(t=>`<option value="t:${esc(t)}">${T('tags')}：${esc(t)}</option>`).join('');
+  $('#xScope').value=sv||'all';if($('#xScope').selectedIndex<0)$('#xScope').value='all';
+  $$('#xLang button').forEach(b=>b.classList.toggle('on',b.dataset.v===XL.lang));
+  $$('#xFmt button').forEach(b=>b.classList.toggle('on',b.dataset.v===XL.fmt));
+  expPreview();if(XL.fmt==='xlsx')loadXLSX().catch(()=>{});
 }
-
-// ══════════════════════════════════════════
-// AI SCAN — Claude Vision
-// ══════════════════════════════════════════
-async function scanWithAI(b64) {
-  const apiKey = getApiKey();
-  if (!apiKey) { showStatus(t('no_api'), 'error'); return; }
-  showStatus(`<span class="spinner"></span>${t('scanning')}`, 'loading');
-
-  const prompt = `You are a business card OCR expert. Extract all information from this business card image and return ONLY a JSON object with these exact keys:
-{"name":"","title":"","company":"","email":"","phone":"","address":"","country_code":""}
-
-country_code must be one of: TW CN HK MO JP KR TH VN MY SG ID PH MM KH LA IN BD LK PK AE SA TR IL UZ KZ DE GB FR IT ES NL CH SE NO DK FI PL CZ AT BE PT RU UA RS HR SK HU RO GR US CA MX BR AR CL CO PE ZA NG EG KE ET GH AU NZ OTHER
-Infer country from address, phone prefix, or language. If unsure use OTHER.
-Return ONLY valid JSON, no explanation, no markdown.`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 500,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: currentImageType, data: b64 } },
-            { type: 'text', text: prompt }
-          ]
-        }]
-      })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const text = data.content[0].text.trim();
-    const json = JSON.parse(text.replace(/```json|```/g,'').trim());
-    populateResult(json);
-    showStatus('', 'hidden');
-  } catch(err) {
-    showStatus(t('save_failed') + (err.message ? ': ' + err.message : ''), 'error');
+function expPreview(){
+  const a=scopeCards();
+  $('#xHint').textContent=T('xN',{n:a.length})+' '+(XL.fmt==='xlsx'&&XL.lang==='bi'?T('xBi'):XL.fmt==='vcf'?T('xVcf'):'');
+  if(!a.length||XL.fmt==='vcf'){$('#xPrev').hidden=true;return}
+  const t=table(a.slice(0,3),XL.lang);$('#xPrev').hidden=false;
+  $('#xPrev').innerHTML=`<table><tr>${t[0].map(h=>`<th>${esc(h)}</th>`).join('')}</tr>${t.slice(1).map(r=>`<tr>${r.map(v=>`<td>${esc(String(v).slice(0,40))}</td>`).join('')}</tr>`).join('')}</table>`;
+}
+let xlsxP=null;
+function loadXLSX(){if(window.XLSX)return Promise.resolve();if(!xlsxP)xlsxP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=()=>{xlsxP=null;rej(new Error('Excel library failed to load'))};document.head.appendChild(s)});return xlsxP}
+function vEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/([,;])/g,'\\$1')}
+function vcard(c,lang){
+  const pick=k=>lang==='bi'?[c[k+'_zh'],c[k+'_en']].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' / '):val(c,k,lang);
+  const nmZ=c.name_zh,nmE=c.name_en;
+  const fn=lang==='bi'?[nmZ,nmE].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' '):val(c,'name',lang);
+  let N;const useEn=(lang!=='zh'&&nmE)||(!nmZ);
+  if(useEn){const p=(nmE||nmZ||'').trim().split(/\s+/);N=p.length>1?`${vEsc(p.pop())};${vEsc(p.join(' '))}`:`${vEsc(p[0]||'')};`}
+  else{const z=nmZ.replace(/\s/g,'');N=hasCJK(z)?`${vEsc(z.slice(0,z.length>=4?2:1))};${vEsc(z.slice(z.length>=4?2:1))}`:`${vEsc(z)};`}
+  const L=['BEGIN:VCARD','VERSION:3.0',`N:${N};;;`,`FN:${vEsc(fn)}`];
+  const org=pick('company'),ti=pick('title'),ad=pick('address');
+  if(org)L.push(`ORG:${vEsc(org)}`);if(ti)L.push(`TITLE:${vEsc(ti)}`);
+  if(lang!=='en'&&nmE&&nmZ&&nmE!==nmZ&&lang!=='bi')L.push(`NICKNAME:${vEsc(nmE)}`);
+  String(c.mobile||'').split('/').map(s=>s.trim()).filter(Boolean).forEach(p=>L.push(`TEL;TYPE=CELL:${p}`));
+  String(c.phone||'').split('/').map(s=>s.trim()).filter(Boolean).forEach(p=>L.push(`TEL;TYPE=WORK,VOICE:${p}`));
+  String(c.email||'').split(/[\s,;/]+/).filter(x=>x.includes('@')).forEach(e=>L.push(`EMAIL;TYPE=INTERNET,WORK:${e}`));
+  if(c.website)L.push(`URL:${c.website}`);
+  if(ad)L.push(`ADR;TYPE=WORK:;;${vEsc(ad)};;;;${vEsc(cName(c.country,lang==='bi'?'en':lang))}`);
+  const note=[c.notes,(c.tags||[]).join(', '),c.folder].filter(Boolean).join(' | ');if(note)L.push(`NOTE:${vEsc(note)}`);
+  L.push('END:VCARD');return L.join('\r\n');
+}
+async function deliver(blob,name){
+  const f=new File([blob],name,{type:blob.type});
+  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files:[f]})){
+    try{await navigator.share({files:[f]});return}catch(e){if(e.name==='AbortError')return}
   }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000);
 }
-
-function populateResult(d) {
-  document.getElementById('f-name').value = d.name || '';
-  document.getElementById('f-title').value = d.title || '';
-  document.getElementById('f-company').value = d.company || '';
-  document.getElementById('f-email').value = d.email || '';
-  document.getElementById('f-phone').value = d.phone || '';
-  document.getElementById('f-address').value = d.address || '';
-  document.getElementById('f-country').value = d.country_code || '';
-  document.getElementById('f-notes').value = '';
-  document.getElementById('result-card').style.display = 'block';
-  document.getElementById('result-card').scrollIntoView({behavior:'smooth'});
+async function doExport(){
+  const a=scopeCards();if(!a.length)return toast(T('xNone'));
+  const tag={zh:'中文',en:'EN',bi:'中英'}[XL.lang], base=`名片_${tag}_${today()}`;
+  if(XL.fmt==='vcf'){await deliver(new Blob([a.map(c=>vcard(c,XL.lang)).join('\r\n')],{type:'text/vcard'}),base+'.vcf');return}
+  if(XL.fmt==='csv'){const t=table(a,XL.lang);const csv=t.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    await deliver(new Blob(['\ufeff'+csv],{type:'text/csv'}),base+'.csv');return}
+  try{await loadXLSX()}catch(e){return toast(e.message)}
+  const wb=XLSX.utils.book_new();
+  const add=(lang,nm)=>{const t=table(a,lang);const ws=XLSX.utils.aoa_to_sheet(t);
+    ws['!cols']=t[0].map((h,i)=>({wch:Math.min(45,Math.max(8,...t.slice(0,60).map(r=>{const s=String(r[i]??'');let w=0;for(const ch of s)w+=hasCJK(ch)?2:1;return w}))+2)}));
+    ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:t.length-1,c:t[0].length-1}})};
+    XLSX.utils.book_append_sheet(wb,ws,nm)};
+  if(XL.lang==='bi'){add('bi','中英對照 Bilingual');add('zh','中文');add('en','English')}else add(XL.lang,XL.lang==='en'?'English':'中文');
+  const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  await deliver(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),base+'.xlsx');
 }
+async function saveVcfOne(){flushSave();const c=cur();const lang=S.lang==='en'?'en':'bi';await deliver(new Blob([vcard(c,lang)],{type:'text/vcard'}),(c.name_en||c.name_zh||'contact').replace(/[\\/:*?"<>|]/g,'')+'.vcf')}
+$('#xLang').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;XL.lang=b.dataset.v;renderExp()});
+$('#xFmt').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;XL.fmt=b.dataset.v;renderExp()});
 
-// ══════════════════════════════════════════
-// SAVE CARD
-// ══════════════════════════════════════════
-function saveCard() {
-  const card = {
-    id: Date.now().toString(),
-    name: document.getElementById('f-name').value,
-    title: document.getElementById('f-title').value,
-    company: document.getElementById('f-company').value,
-    email: document.getElementById('f-email').value,
-    phone: document.getElementById('f-phone').value,
-    address: document.getElementById('f-address').value,
-    country: document.getElementById('f-country').value || 'OTHER',
-    notes: document.getElementById('f-notes').value,
-    savedAt: new Date().toISOString(),
-  };
-  const cards = getCards();
-  cards.unshift(card);
-  saveCards(cards);
-  showStatus(t('saved'), 'success');
-  document.getElementById('result-card').style.display = 'none';
-  document.getElementById('img-preview').style.display = 'none';
-  currentImageBase64 = null;
-  document.getElementById('file-input').value = '';
-  updateSettingsCount();
+// ───────── settings ─────────
+let mailL='zh';
+function renderSet(){
+  $('#sKey').value=getKey();
+  $$('#sModel button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.model));
+  $('#sTags').innerHTML=S.tags.map(t=>`<button class="chip ${tagCls(t)}" onclick="delTag('${esc(t)}')">${esc(t)}<span class="xx">×</span></button>`).join('');
+  $('#sFolders').innerHTML=S.folders.map(t=>`<button class="chip c0" onclick="delFolder('${esc(t)}')">${esc(t)}<span class="xx">×</span></button>`).join('');
+  $('#sMe').value=S.me||'';
+  $$('#sMailL button').forEach(b=>b.classList.toggle('on',b.dataset.v===mailL));
+  $('#sMailS').value=S.mail[mailL].s;$('#sMailB').value=S.mail[mailL].b;
+  $('#sInfo').textContent=T('info',{n:CARDS.length});
 }
+function saveKey(){try{localStorage.setItem('cv_apikey',$('#sKey').value.trim())}catch(e){}toast(T('saved'));refresh()}
+async function testKey(){saveKey();$('#kRes').textContent='…';
+  try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:S.model,max_tokens:1,messages:[{role:'user',content:'hi'}]})});
+    const j=await r.json().catch(()=>({}));$('#kRes').textContent=r.ok?T('keyOk'):(r.status===401?T('badKey'):'✗ '+((j.error&&j.error.message)||r.status))}
+  catch(e){$('#kRes').textContent='✗ '+e.message}}
+$('#sModel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.model=b.dataset.v;saveS();renderSet()});
+$('#sMailL').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mailL=b.dataset.v;renderSet()});
+$('#sMailS').addEventListener('input',e=>{S.mail[mailL].s=e.target.value;saveS()});
+$('#sMailB').addEventListener('input',e=>{S.mail[mailL].b=e.target.value;saveS()});
+$('#sMe').addEventListener('input',e=>{S.me=e.target.value;saveS()});
+function addTag(){const v=$('#sTagIn').value.trim();if(v&&!S.tags.includes(v)){S.tags.push(v);saveS()}$('#sTagIn').value='';renderSet();renderBatch()}
+function addFolder(){const v=$('#sFolIn').value.trim();if(v&&!S.folders.includes(v)){S.folders.push(v);saveS()}$('#sFolIn').value='';renderSet();renderBatch()}
+async function delTag(t){if(!confirm(T('cDelTag',{n:t})))return;S.tags=S.tags.filter(x=>x!==t);S.bTags=(S.bTags||[]).filter(x=>x!==t);saveS();
+  for(const c of CARDS)if((c.tags||[]).includes(t)){c.tags=c.tags.filter(x=>x!==t);await putCard(c)}renderSet();renderBatch()}
+async function delFolder(f){if(!confirm(T('cDelFol',{n:f})))return;S.folders=S.folders.filter(x=>x!==f);if(S.bFolder===f)S.bFolder='';saveS();
+  for(const c of CARDS)if(c.folder===f){c.folder='';await putCard(c)}renderSet();renderBatch()}
+function backup(){const data=JSON.stringify({app:'card-scanner',v:2,exportedAt:new Date().toISOString(),settings:{tags:S.tags,folders:S.folders},cards:CARDS});
+  deliver(new Blob([data],{type:'application/json'}),`名片備份_${today()}.json`)}
+$('#inRestore').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const j=JSON.parse(await f.text());const arr=Array.isArray(j)?j:j.cards||[];let n=0;
+    if(j.settings){for(const t of j.settings.tags||[])if(!S.tags.includes(t))S.tags.push(t);for(const t of j.settings.folders||[])if(!S.folders.includes(t))S.folders.push(t);saveS()}
+    for(const o of arr){if(!o||!o.id)continue;await putCard(Object.assign(blank(),o));n++}
+    toast(T('restored',{n}));refresh();renderSet()}catch(err){toast('✗ '+err.message)}});
+async function clearAll(){if(!confirm(T('cClear')))return;CARDS=[];if(db)await idb('readwrite',s=>s.clear());try{localStorage.removeItem('cv_cards')}catch(e){}Q.length=0;refresh();renderSet();renderQ()}
 
-// ══════════════════════════════════════════
-// STATUS BAR
-// ══════════════════════════════════════════
-function showStatus(msg, type) {
-  const el = document.getElementById('status-bar');
-  el.innerHTML = msg;
-  el.className = 'status-bar ' + (type === 'hidden' ? '' : type);
-  el.style.display = type === 'hidden' ? 'none' : 'block';
+// ───────── batch bar ─────────
+function renderBatch(){
+  const s=$('#bFolder');s.innerHTML=`<option value="">${T('uncat')}</option>`+S.folders.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('')+`<option value="__add">＋ ${T('folder')}…</option>`;
+  s.value=S.folders.includes(S.bFolder)?S.bFolder:'';
+  $('#bTags').innerHTML=S.tags.map(t=>`<button class="chip ${tagCls(t)} ${(S.bTags||[]).includes(t)?'sel':'off'}" onclick="bTag('${esc(t)}')">${esc(t)}</button>`).join('');
 }
+function bTag(t){S.bTags=S.bTags||[];S.bTags=S.bTags.includes(t)?S.bTags.filter(x=>x!==t):[...S.bTags,t];saveS();renderBatch()}
+$('#bFolder').addEventListener('change',e=>{if(e.target.value!=='__add')return;const n=(prompt(T('newFolder'))||'').trim();if(n&&!S.folders.includes(n))S.folders.push(n);S.bFolder=n||'';saveS();renderBatch()});
 
-// ══════════════════════════════════════════
-// BROWSE + SEARCH
-// ══════════════════════════════════════════
-function renderBrowse() {
-  const cards = getCards();
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const contF = document.getElementById('continent-filter').value;
-  const cf = document.getElementById('country-filter').value;
-
-  let filtered = cards.filter(c => {
-    const match = !q || [c.name,c.company,c.email,c.phone,c.title].join(' ').toLowerCase().includes(q);
-    const ctry = countryByCode(c.country||'OTHER');
-    const contMatch = !contF || ctry.continent === contF;
-    const cMatch = !cf || c.country === cf;
-    return match && contMatch && cMatch;
-  });
-
-  // Group by continent → country
-  const byContinent = {};
-  filtered.forEach(c => {
-    const ctry = countryByCode(c.country||'OTHER');
-    const cont = ctry.continent || 'OTHER';
-    if (!byContinent[cont]) byContinent[cont] = {};
-    if (!byContinent[cont][ctry.code]) byContinent[cont][ctry.code] = [];
-    byContinent[cont][ctry.code].push(c);
-  });
-
-  const allCards = getCards();
-  document.getElementById('stat-total').textContent = allCards.length;
-  const uniqueCountries = [...new Set(allCards.map(c=>c.country||'OTHER'))].length;
-  document.getElementById('stat-countries').textContent = uniqueCountries;
-
-  const container = document.getElementById('browse-list');
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div style="font-size:3rem;">📇</div><p>${t('empty')}</p></div>`;
-    return;
-  }
-
-  container.innerHTML = '';
-  const contOrder = CONTINENTS.map(c=>c.code);
-  const sortedConts = Object.keys(byContinent).sort((a,b) => contOrder.indexOf(a)-contOrder.indexOf(b));
-
-  sortedConts.forEach(contCode => {
-    const contObj = CONTINENTS.find(c=>c.code===contCode) || {flag:'🌐',zh:'其他',en:'Other'};
-    // Continent header
-    const contDiv = document.createElement('div');
-    contDiv.style.cssText = 'margin-bottom:1.5rem;';
-    const contHeader = document.createElement('div');
-    contHeader.style.cssText = 'font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.75rem;display:flex;align-items:center;gap:6px;';
-    contHeader.innerHTML = `<span>${contObj.flag}</span><span>${continentName(contObj)}</span>`;
-    contDiv.appendChild(contHeader);
-
-    const countryGroups = byContinent[contCode];
-    const countryOrder = COUNTRIES.filter(c=>c.continent===contCode).map(c=>c.code);
-    const sortedCtrs = Object.keys(countryGroups).sort((a,b) => countryOrder.indexOf(a)-countryOrder.indexOf(b));
-
-    sortedCtrs.forEach(code => {
-      const ctry = countryByCode(code);
-      const grp = document.createElement('div');
-      grp.className = 'country-group';
-      grp.innerHTML = `
-        <div class="country-header">
-          <span class="country-flag">${ctry.flag}</span>
-          <span class="country-name">${countryName(ctry)}</span>
-          <span class="country-count">${countryGroups[code].length} ${lang==='zh'?'張':'cards'}</span>
-        </div>
-        <div class="cards-grid" id="grp-${code}"></div>`;
-      contDiv.appendChild(grp);
-      const grid = grp.querySelector('.cards-grid');
-      countryGroups[code].forEach(card => {
-        const el = document.createElement('div');
-        el.className = 'contact-card';
-        el.innerHTML = `
-          <div class="contact-card-name">${esc(card.name)||'—'}</div>
-          <div class="contact-card-title">${esc(card.title)||''}</div>
-          <div class="contact-card-company">${esc(card.company)||''}</div>
-          <div class="contact-card-meta">
-            ${card.email?`<span class="contact-meta-item">✉ ${esc(card.email)}</span>`:''}
-            ${card.phone?`<span class="contact-meta-item">📞 ${esc(card.phone)}</span>`:''}
-          </div>
-          <div class="contact-card-actions">
-            <button class="action-btn" onclick="openModal('${card.id}')">${lang==='zh'?'詳細':'Detail'}</button>
-            <button class="action-btn del" onclick="deleteCard('${card.id}',event)">${lang==='zh'?'刪除':'Delete'}</button>
-          </div>`;
-        grid.appendChild(el);
-      });
-    });
-    container.appendChild(contDiv);
-  });
+// ───────── nav / lang ─────────
+function go(t){$$('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));$$('nav.bottom button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  if(t==='list'){renderFilters();renderList()}if(t==='exp')renderExp();if(t==='set')renderSet();if(t==='scan'){renderBatch();renderQ()}window.scrollTo(0,0)}
+function refresh(){
+  const pend=CARDS.filter(c=>c.status==='new').length;const bd=$('#pendBd');bd.hidden=!pend;bd.textContent=pend;
+  $('#keyWarn').hidden=!!getKey();$('#hdrSub').textContent=T('cards',{n:CARDS.length});
+  refreshRev();
+  if($('#t-list').classList.contains('on')){renderFilters();renderList()}
+  if($('#t-exp').classList.contains('on'))expPreview();
 }
-function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function applyLang(){
+  document.documentElement.lang=S.lang==='en'?'en':'zh-Hant';
+  $$('[data-t]').forEach(el=>el.textContent=T(el.dataset.t));
+  $$('[data-tp]').forEach(el=>el.placeholder=T(el.dataset.tp));
+  $('#langBtn').textContent=S.lang==='en'?'中文':'EN';
+}
+function toggleLang(){S.lang=S.lang==='en'?'zh':'en';saveS();applyLang();const t=($('.tab.on')||{}).id||'t-scan';go(t.slice(2));refresh();if(edId)openEd(edId)}
 
-function deleteCard(id, e) {
-  e.stopPropagation();
-  if (!confirm(t('confirm_delete'))) return;
-  const cards = getCards().filter(c=>c.id!==id);
-  saveCards(cards);
-  renderBrowse();
-  updateSettingsCount();
-}
+$('#inCam').addEventListener('change',e=>{addFiles(e.target.files);e.target.value=''});
+$('#inLib').addEventListener('change',e=>{addFiles(e.target.files);e.target.value=''});
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer&&e.dataTransfer.files.length){go('scan');addFiles(e.dataTransfer.files)}});
+window.addEventListener('beforeunload',e=>{if(Q.some(j=>['prep','wait','run'].includes(j.st))){e.preventDefault();e.returnValue=''}});
 
-// ══════════════════════════════════════════
-// DETAIL MODAL
-// ══════════════════════════════════════════
-function openModal(id) {
-  const card = getCards().find(c=>c.id===id);
-  if (!card) return;
-  document.getElementById('modal-name').textContent = card.name||'—';
-  document.getElementById('modal-title').textContent = card.title||'';
-  document.getElementById('modal-company').textContent = card.company||'';
-  const ctry = countryByCode(card.country||'OTHER');
-  const fields = [
-    {icon:'✉',label:'Email',val:card.email},
-    {icon:'📞',label:t('f_phone'),val:card.phone},
-    {icon:'📍',label:t('f_address'),val:card.address},
-    {icon:ctry.flag,label:t('f_country'),val:countryName(ctry)},
-    {icon:'🕐',label:'Saved',val:card.savedAt?new Date(card.savedAt).toLocaleDateString():''},
-  ];
-  let html = '';
-  fields.forEach(f => {
-    if (!f.val) return;
-    html += `<div class="modal-field">
-      <div class="modal-field-icon">${f.icon}</div>
-      <div class="modal-field-content">
-        <div class="modal-field-label">${f.label}</div>
-        <div class="modal-field-value">${esc(f.val)}</div>
-      </div></div>`;
-  });
-  if (card.notes) {
-    html += `<div class="modal-field">
-      <div class="modal-field-icon">📝</div>
-      <div class="modal-field-content">
-        <div class="modal-field-label">${t('f_notes')}</div>
-        <div class="modal-notes-box">${esc(card.notes)}</div>
-      </div></div>`;
-  }
-  document.getElementById('modal-fields').innerHTML = html;
-  document.getElementById('modal-overlay').classList.add('open');
-}
-function closeModal(e) { if(e.target===document.getElementById('modal-overlay')) closeModalBtn(); }
-function closeModalBtn() { document.getElementById('modal-overlay').classList.remove('open'); }
-
-// ══════════════════════════════════════════
-// TAB SWITCH
-// ══════════════════════════════════════════
-function switchTab(tab) {
-  ['scan','browse','settings'].forEach(t => {
-    document.getElementById(`tab-${t}`).style.display = t===tab?'block':'none';
-    document.getElementById(`tab-${t}-btn`).classList.toggle('active', t===tab);
-  });
-  if (tab==='browse') renderBrowse();
-  if (tab==='settings') updateSettingsCount();
-}
-
-// ══════════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════════
-function updateSettingsCount() {
-  const el = document.getElementById('settings-card-count');
-  if (el) el.textContent = getCards().length + (lang==='zh'?' 張':'  cards');
-}
-function clearAllData() {
-  if (!confirm(t('confirm_clear'))) return;
-  saveCards([]);
-  renderBrowse();
-  updateSettingsCount();
-}
-
-// ══════════════════════════════════════════
-// EXPORT
-// ══════════════════════════════════════════
-function exportCSV() {
-  const cards = getCards();
-  const cols = ['name','title','company','email','phone','address','country','notes','savedAt'];
-  const header = 'Name,Title,Company,Email,Phone,Address,Country,Notes,Saved At\n';
-  const rows = cards.map(c => cols.map(k=>`"${(c[k]||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  downloadFile('cardvault_export.csv', header+rows, 'text/csv');
-}
-function exportJSON() {
-  const cards = getCards().map(({image,...rest})=>rest);
-  downloadFile('cardvault_export.json', JSON.stringify(cards,null,2), 'application/json');
-}
-function downloadFile(name, content, type) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content],{type}));
-  a.download = name; a.click();
-}
+(async()=>{
+  applyLang();renderBatch();
+  try{await openDB();CARDS=(await idb('readonly',s=>s.getAll()))||[]}catch(e){console.warn('IndexedDB unavailable',e)}
+  try{await migrateOld()}catch(e){console.warn(e)}
+  refresh();
+})();
 </script>
 </body>
 </html>
