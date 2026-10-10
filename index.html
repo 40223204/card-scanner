@@ -174,6 +174,7 @@ input.ln:focus,textarea.ln:focus{border-bottom-color:var(--tan)}
 .toast{position:fixed;left:50%;bottom:calc(96px + var(--sb));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;max-width:90vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.18);animation:up .2s}
 .viewer{position:fixed;inset:0;z-index:80;background:rgba(20,12,6,.92);display:flex;align-items:center;justify-content:center;padding:20px}
 .viewer img{max-width:100%;max-height:100%;border-radius:10px}
+.row{content-visibility:auto;contain-intrinsic-size:auto 72px}
 </style>
 </head>
 <body>
@@ -244,7 +245,7 @@ input.ln:focus,textarea.ln:focus{border-bottom-color:var(--tan)}
     <div class="seg" id="sEngine"><button data-v="gemini">Gemini</button><button data-v="claude">Claude</button></div>
     <div id="gBox">
       <h3 data-t="gKey" style="margin-top:16px">Gemini API 金鑰</h3>
-      <div class="ir"><input class="inp" id="sGKey" type="password" placeholder="AIza..." autocomplete="off"><button class="btn main sm" onclick="saveKey()" data-t="save">儲存</button></div>
+      <div class="ir"><input class="inp" id="sGKey" type="password" placeholder="AQ.… 或 AIza…" autocomplete="off"><button class="btn main sm" onclick="saveKey()" data-t="save">儲存</button></div>
       <div class="hint"><span data-t="gHint">免費申請：</span> <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--brown);font-weight:700">aistudio.google.com/apikey</a></div>
       <h3 data-t="gModel" style="margin-top:16px">模型</h3>
       <select class="sel" id="sGModel" style="width:100%"></select>
@@ -355,7 +356,7 @@ const L = {
   xAll:'全部名片',xPend:'待確認',xNew:'今天掃描的',xN:'將匯出 {n} 張。',xBi:'Excel「中英對照」內含：對照表、中文、English 三個分頁。',
   xVcf:'vCard 可直接匯入 iPhone／Android 通訊錄。',xNone:'沒有可匯出的名片',
   setKey:'Claude API 金鑰',save:'儲存',keyHint:'金鑰只存在這支手機的瀏覽器。',test:'測試',keyOk:'✓ 金鑰可用',saved:'已儲存',
-  mode:'辨識模式',fast:'快速',acc:'精準',modeHint:'快速：約 2–4 秒／張，費用最低；精準：小字、手寫、多語名片較準，但較慢。',engine:'辨識引擎',gKey:'Gemini API 金鑰',gHint:'免費申請：',gModel:'模型',gModelHint:'按「測試」會載入你帳號可用的模型。Flash 快又準；Pro 最準但較慢。',gOk:'✓ 金鑰可用，已載入 {n} 個模型',
+  mode:'辨識模式',fast:'快速',acc:'精準',modeHint:'快速：約 2–4 秒／張，費用最低；精準：小字、手寫、多語名片較準，但較慢。',engine:'辨識引擎',gKey:'Gemini API 金鑰',gHint:'免費申請：',gModel:'模型',gModelHint:'按「測試」會載入你帳號可用的模型。Flash 快又準；Pro 最準但較慢。',gOk:'✓ 金鑰可用，已載入 {n} 個模型',dayQuota:'今日 Gemini 免費額度已用完。可到「設定」換另一個模型（各模型額度分開），或明天再試',rl:'⏳ 達到速率上限，自動放慢（同時 {n} 張）',
   mgTags:'標籤',mgFolders:'資料夾',mailTpl:'寄信範本',me:'我的署名（姓名／公司／電話）',tplHint:'可用 {name} {company} {me}。寄信時依名片國家自動選中文或英文範本。',
   data:'資料',backup:'備份',restore:'還原備份',clearAll:'清除全部名片',info:'共 {n} 張名片，存在這支手機的瀏覽器。換手機前請先「備份」。',
   cDel:'確定刪除這張名片？',cClear:'確定刪除全部名片？無法復原。',cDelTag:'刪除標籤「{n}」？（名片上的標籤也會移除）',cDelFol:'刪除資料夾「{n}」？（名片會移到未分類）',
@@ -374,7 +375,7 @@ const L = {
   xAll:'All cards',xPend:'To review',xNew:'Scanned today',xN:'{n} cards will be exported.',xBi:'Bilingual Excel has 3 sheets: side-by-side, Chinese, English.',
   xVcf:'vCard imports straight into iPhone / Android contacts.',xNone:'Nothing to export',
   setKey:'Claude API key',save:'Save',keyHint:'Stored only in this browser.',test:'Test',keyOk:'✓ Key works',saved:'Saved',
-  mode:'Mode',fast:'Fast',acc:'Accurate',modeHint:'Fast: ~2–4 s per card, cheapest. Accurate: better for tiny print, handwriting, mixed languages, but slower.',engine:'Recognition engine',gKey:'Gemini API key',gHint:'Get one free:',gModel:'Model',gModelHint:'Tap Test to load the models your account can use. Flash is fast and accurate; Pro is the most accurate but slower.',gOk:'✓ Key works, {n} models loaded',
+  mode:'Mode',fast:'Fast',acc:'Accurate',modeHint:'Fast: ~2–4 s per card, cheapest. Accurate: better for tiny print, handwriting, mixed languages, but slower.',engine:'Recognition engine',gKey:'Gemini API key',gHint:'Get one free:',gModel:'Model',gModelHint:'Tap Test to load the models your account can use. Flash is fast and accurate; Pro is the most accurate but slower.',gOk:'✓ Key works, {n} models loaded',dayQuota:'Daily Gemini free quota used up. Pick another model in Settings (separate quota) or try tomorrow',rl:'⏳ Rate limited, slowing down ({n} at a time)',
   mgTags:'Tags',mgFolders:'Folders',mailTpl:'Email templates',me:'My signature (name / company / phone)',tplHint:'Use {name} {company} {me}. Chinese or English template is picked by the card\'s country.',
   data:'Data',backup:'Backup',restore:'Restore',clearAll:'Delete all cards',info:'{n} cards stored in this browser. Back up before changing phones.',
   cDel:'Delete this card?',cClear:'Delete ALL cards? This cannot be undone.',cDelTag:'Delete tag "{n}"?',cDelFol:'Delete folder "{n}"? Cards move to Unfiled.',
@@ -411,12 +412,17 @@ const cName=(c,lang)=>{if(!c)return'';const o=CTRY.find(x=>x.c===c);if(!o)return
 
 // ───────── IndexedDB ─────────
 let db=null, CARDS=[];
-function idb(mode,fn){return new Promise((res,rej)=>{const t=db.transaction('cards',mode);const st=t.objectStore('cards');const r=fn(st);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})}
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('cardscanner',1);r.onupgradeneeded=()=>r.result.createObjectStore('cards',{keyPath:'id'});r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+function idb(mode,fn,store='cards'){return new Promise((res,rej)=>{const t=db.transaction(store,mode);const st=t.objectStore(store);const r=fn(st);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})}
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('cardscanner',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('cards'))d.createObjectStore('cards',{keyPath:'id'});if(!d.objectStoreNames.contains('imgs'))d.createObjectStore('imgs',{keyPath:'id'})};r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
 async function putCard(c){c.updatedAt=new Date().toISOString();const i=CARDS.findIndex(x=>x.id===c.id);if(i<0)CARDS.unshift(c);else CARDS[i]=c;if(db)await idb('readwrite',s=>s.put(c));}
-async function rmCard(id){CARDS=CARDS.filter(x=>x.id!==id);if(db)await idb('readwrite',s=>s.delete(id));}
+async function rmCard(id){CARDS=CARDS.filter(x=>x.id!==id);delete MEMIMG[id];if(db){await idb('readwrite',s=>s.delete(id));await idb('readwrite',s=>s.delete(id),'imgs')}}
+// 原圖另存 imgs，名片清單只帶小縮圖，避免記憶體越掃越大
+const MEMIMG={};
+async function putImgs(id,o){const r=Object.assign({id},o);if(db)await idb('readwrite',s=>s.put(r),'imgs');else MEMIMG[id]=r}
+async function getImgs(id){if(!db)return MEMIMG[id]||{};try{return(await idb('readonly',s=>s.get(id),'imgs'))||{}}catch(e){return{}}}
+async function splitOld(){let n=0;for(const c of CARDS.slice()){if(!('img' in c)&&!('imgBack' in c))continue;const img=c.img||'',bk=c.imgBack||'';if(img||bk)await putImgs(c.id,{img,imgBack:bk});c.hasBack=!!bk;if(!c.thumb)c.thumb=await miniFrom(img);delete c.img;delete c.imgBack;await putCard(c);n++}if(n)refresh()}
 const byId=id=>CARDS.find(x=>x.id===id);
-const blank=()=>({id:uid(),createdAt:new Date().toISOString(),name_zh:'',name_en:'',title_zh:'',title_en:'',company_zh:'',company_en:'',email:'',phone:'',mobile:'',website:'',address_zh:'',address_en:'',country:'',tags:[],folder:'',notes:'',status:'new',tr:[],img:'',imgBack:''});
+const blank=()=>({id:uid(),createdAt:new Date().toISOString(),name_zh:'',name_en:'',title_zh:'',title_en:'',company_zh:'',company_en:'',email:'',phone:'',mobile:'',website:'',address_zh:'',address_en:'',country:'',tags:[],folder:'',notes:'',status:'new',tr:[],thumb:'',hasBack:false});
 
 async function migrateOld(){ // 舊版 CardVault (localStorage cv_cards)
   if(lsGet('cs_migrated',false))return;
@@ -433,9 +439,11 @@ async function migrateOld(){ // 舊版 CardVault (localStorage cv_cards)
 }
 
 // ───────── image prep ─────────
-function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=()=>{URL.revokeObjectURL(u);rej(new Error(T('imgErr')))};i.src=u})}
-function shrink(img,max,q){const w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height,s=Math.min(1,max/Math.max(w0,h0));const c=document.createElement('canvas');c.width=Math.round(w0*s);c.height=Math.round(h0*s);const x=c.getContext('2d');x.drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)}
-async function prep(file){const img=await loadImg(file);return{big:shrink(img,1600,.85),thumb:shrink(img,900,.72)}}
+function loadImg(src){return new Promise((res,rej)=>{const u=typeof src==='string'?src:URL.createObjectURL(src);const i=new Image();const done=()=>{if(u!==src)URL.revokeObjectURL(u)};i.onload=()=>{done();res(i)};i.onerror=()=>{done();rej(new Error(T('imgErr')))};i.src=u})}
+function canv(src,max){const w0=src.naturalWidth||src.width,h0=src.naturalHeight||src.height,k=Math.min(1,max/Math.max(w0,h0));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w0*k));c.height=Math.max(1,Math.round(h0*k));c.getContext('2d').drawImage(src,0,0,c.width,c.height);return c}
+const jpg=(c,q)=>c.toDataURL('image/jpeg',q), freeC=(...cs)=>cs.forEach(c=>{c.width=c.height=0});
+async function prep(file){const img=await loadImg(file);const a=canv(img,1600);img.src='';const b=canv(a,1280),m=canv(a,240);const r={big:jpg(a,.85),view:jpg(b,.78),mini:jpg(m,.6)};freeC(a,b,m);return r}
+async function miniFrom(d){if(!d)return'';try{const img=await loadImg(d);const m=canv(img,240);const u=jpg(m,.6);freeC(m);img.src='';return u}catch(e){return''}}
 
 // ───────── Claude ─────────
 const PROMPT=`Read this business card (the images are its front and, if given, back) and return ONLY one JSON object, no markdown:
@@ -456,13 +464,16 @@ async function callGemini(images,attempt=0,noThink=false){
   const parts=images.filter(Boolean).map(d=>({inline_data:{mime_type:'image/jpeg',data:d.split(',')[1]}}));parts.push({text:PROMPT});
   const gc={responseMimeType:'application/json',temperature:0};
   if(!noThink){if(/2\.5-flash/.test(m))gc.thinkingConfig={thinkingBudget:0};else if(/gemini-3/.test(m))gc.thinkingConfig={thinkingLevel:'low'}}
-  let r;
+  await waitRL();let r;
   try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:gc})})}
   catch(e){if(attempt<2){await sleep(1200*(attempt+1));return callGemini(images,attempt+1,noThink)}throw e}
   const j=await r.json().catch(()=>({}));const msg=(j.error&&j.error.message)||'';
   if(r.status===400&&!noThink&&gc.thinkingConfig&&/think/i.test(msg))return callGemini(images,attempt,true);
-  if((r.status===429||r.status>=500)&&attempt<4){const rd=((j.error&&j.error.details)||[]).find(d=>d.retryDelay);await sleep(Math.min(rd?parseFloat(rd.retryDelay)*1000:2500*(attempt+1),30000)+300);return callGemini(images,attempt+1,noThink)}
+  if(r.status===429&&/PerDay/i.test(JSON.stringify(j.error||{})))throw new Error(T('dayQuota'));
+  if(r.status===429)slowDown(parseFloat((((j.error&&j.error.details)||[]).find(d=>d.retryDelay)||{}).retryDelay)*1000||4000*(attempt+1));
+  if((r.status===429||r.status>=500)&&attempt<6){if(r.status!==429)await sleep(2000*(attempt+1));await waitRL();return callGemini(images,attempt+1,noThink)}
   if(!r.ok)throw new Error(r.status===403||/API key/i.test(msg)?T('badKey'):msg||('HTTP '+r.status));
+  okRL();
   const c=j.candidates&&j.candidates[0];
   return parseJSON(((c&&c.content&&c.content.parts)||[]).map(p=>p.text||'').join(''));
 }
@@ -475,7 +486,9 @@ async function callClaude(images,attempt=0){
     r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:S.model,max_tokens:1024,messages:[{role:'user',content}]})});
   }catch(e){if(attempt<2){await sleep(1200*(attempt+1));return callClaude(images,attempt+1)}throw e}
-  if((r.status===429||r.status>=500)&&attempt<3){await sleep(1500*(attempt+1));return callClaude(images,attempt+1)}
+  if(r.status===429)slowDown(5000*(attempt+1));
+  if((r.status===429||r.status>=500)&&attempt<5){if(r.status!==429)await sleep(1500*(attempt+1));await waitRL();return callClaude(images,attempt+1)}
+  if(r.ok)okRL();
   const j=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(r.status===401?T('badKey'):(j.error&&j.error.message)||('HTTP '+r.status));
   const txt=(j.content||[]).map(b=>b.text||'').join('');
@@ -496,6 +509,10 @@ function findDup(c){
 
 // ───────── batch queue ─────────
 const Q=[];let running=0,prepChain=Promise.resolve();const CONC=4;
+const RL={until:0,conc:CONC,ok:0};
+function slowDown(ms){RL.conc=Math.max(1,RL.conc-1);RL.ok=0;RL.until=Math.max(RL.until,Date.now()+Math.min(ms||4000,60000));renderQ()}
+function okRL(){if(++RL.ok>=6&&RL.conc<CONC){RL.conc++;RL.ok=0;setTimeout(pump)}}
+async function waitRL(){let w;while((w=RL.until-Date.now())>0)await sleep(Math.min(w,1000))}
 function addFiles(list){
   const files=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name));
   if(!files.length)return;
@@ -504,16 +521,17 @@ function addFiles(list){
   renderQ();
 }
 async function prepJob(job){
-  try{const p=await prep(job.file);job.big=p.big;job.thumb=p.thumb;job.st='wait'}catch(e){job.st='err';job.err=T('imgErr')}
+  while(Q.filter(x=>x.st==='wait').length>=8)await sleep(300);
+  try{const p=await prep(job.file);job.big=p.big;job.view=p.view;job.mini=p.mini;job.st='wait'}catch(e){job.st='err';job.err=T('imgErr')}
   job.file=null;renderQ();pump();
 }
-function pump(){while(running<CONC){const j=Q.find(x=>x.st==='wait');if(!j)break;runJob(j)}}
+function pump(){while(running<RL.conc){const j=Q.find(x=>x.st==='wait');if(!j)break;runJob(j)}}
 async function runJob(job){
   running++;job.st='run';job.t0=performance.now();renderQ();
   try{
     const d=await callAI([job.big]);
-    const c=applyAI(blank(),d);c.img=job.thumb;c.folder=S.bFolder||'';c.tags=[...(S.bTags||[])];c.dup=findDup(c);
-    await putCard(c);job.cardId=c.id;job.st='done';job.sec=((performance.now()-job.t0)/1000).toFixed(1);job.big=null;
+    const c=applyAI(blank(),d);c.thumb=job.mini;c.folder=S.bFolder||'';c.tags=[...(S.bTags||[])];c.dup=findDup(c);
+    await putImgs(c.id,{img:job.view,imgBack:''});await putCard(c);job.cardId=c.id;job.st='done';job.sec=((performance.now()-job.t0)/1000).toFixed(1);job.big=job.view=null;
   }catch(e){job.st='err';job.err=e.message||String(e)}
   running--;renderQ();refresh();pump();
 }
@@ -521,20 +539,29 @@ function tapJob(id){const j=Q.find(x=>x.id===id);if(!j)return;
   if(j.st==='done'&&byId(j.cardId))openEd(j.cardId);
   else if(j.st==='err'){if(j.big){j.st='wait';j.err='';renderQ();pump()}else{Q.splice(Q.indexOf(j),1);renderQ()}}}
 function clearQ(){for(let i=Q.length-1;i>=0;i--)if(Q[i].st==='done'||Q[i].st==='err')Q.splice(i,1);renderQ()}
-function renderQ(){
+let qRaf=0;
+function renderQ(){if(!qRaf)qRaf=setTimeout(()=>{qRaf=0;drawQ()},60)}
+function qRow(j){
+  const c=j.cardId&&byId(j.cardId);let main,st;
+  if(j.st==='done'&&c){main=`<div class="n">${esc(c.name_zh||c.name_en||'—')}${c.name_en&&c.name_en!==c.name_zh?`<span class="en">${esc(c.name_en)}</span>`:''}</div><div class="s">${esc([c.title_zh||c.title_en,c.company_zh||c.company_en].filter(Boolean).join(' · '))}</div>`;
+    st=c.dup?`<span class="tag-p tag-d">${T('dupB')}</span>`:c.status==='new'?`<span class="st ok">✓ ${j.sec}s</span>`:`<span class="st ok">✓</span>`}
+  else{main=`<div class="s">${j.st==='err'?esc(j.err):''}</div>`;
+    st=j.st==='run'?`<span class="st run"><i class="spin"></i>${T('stRun')}</span>`:j.st==='err'?`<span class="st err">${T('stErr')}</span>`:`<span class="st">${T(j.st==='prep'?'stPrep':'stWait')}</span>`}
+  return `${j.mini?`<img class="th" src="${j.mini}">`:'<div class="th"></div>'}<div class="ci">${main}</div>${st}`;
+}
+function drawQ(){
   $('#qWrap').hidden=!Q.length;
   const d=Q.filter(x=>x.st==='done').length,e=Q.filter(x=>x.st==='err').length;
-  $('#qStat').innerHTML=`<b>${T('qStat',{d,t:Q.length})}</b>${e?T('qErr',{e}):''}`;
+  const rl=RL.until>Date.now()||RL.conc<CONC?` · ${T('rl',{n:RL.conc})}`:'';
+  $('#qStat').innerHTML=`<b>${T('qStat',{d,t:Q.length})}</b>${e?T('qErr',{e}):''}${rl}`;
   $('#qProg').style.width=(Q.length?((d+e)/Q.length*100):0)+'%';
-  $('#qList').innerHTML=Q.slice().reverse().map(j=>{
-    const c=j.cardId&&byId(j.cardId);
-    let main,st;
-    if(j.st==='done'&&c){main=`<div class="n">${esc(c.name_zh||c.name_en||'—')}${c.name_en&&c.name_en!==c.name_zh?`<span class="en">${esc(c.name_en)}</span>`:''}</div><div class="s">${esc([c.title_zh||c.title_en,c.company_zh||c.company_en].filter(Boolean).join(' · '))}</div>`;
-      st=c.dup?`<span class="tag-p tag-d">${T('dupB')}</span>`:c.status==='new'?`<span class="st ok">✓ ${j.sec}s</span>`:`<span class="st ok">✓</span>`}
-    else{main=`<div class="s">${j.st==='err'?esc(j.err):''}</div>`;
-      st=j.st==='run'?`<span class="st run"><i class="spin"></i>${T('stRun')}</span>`:j.st==='err'?`<span class="st err">${T('stErr')}</span>`:`<span class="st">${T(j.st==='prep'?'stPrep':'stWait')}</span>`}
-    return `<div class="row" onclick="tapJob('${j.id}')">${j.thumb?`<img class="th" src="${j.thumb}">`:'<div class="th"></div>'}<div class="ci">${main}</div>${st}</div>`;
-  }).join('');
+  const list=$('#qList'),ids=new Set(Q.map(x=>x.id));
+  for(const el of [...list.children])if(!ids.has(el.dataset.id))el.remove();
+  for(const j of Q){
+    const c=j.cardId&&byId(j.cardId),k=[j.st,j.err,c&&c.updatedAt,c&&c.dup,c&&c.status,S.lang].join('|');
+    if(!j.el||!j.el.isConnected){j.el=document.createElement('div');j.el.className='row';j.el.dataset.id=j.id;j.el.onclick=()=>tapJob(j.id);list.prepend(j.el);j._k=''}
+    if(j._k!==k){j._k=k;j.el.innerHTML=qRow(j)}
+  }
   refreshRev();
 }
 function refreshRev(){const n=CARDS.filter(c=>c.status==='new').length;const b=$('#revBtn');b.hidden=!n;b.textContent=T('review',{n})}
@@ -566,7 +593,7 @@ function filtered(){
 }
 function rowHTML(c){
   const nm=c.name_zh||c.name_en||'—';
-  return `<div class="row" onclick="openEd('${c.id}')">${c.img?`<img class="th" src="${c.img}" loading="lazy">`:'<div class="th"></div>'}
+  return `<div class="row" onclick="openEd('${c.id}')">${c.thumb?`<img class="th" src="${c.thumb}" loading="lazy">`:'<div class="th"></div>'}
   <div class="ci"><div class="n">${esc(nm)}${c.name_en&&c.name_en!==nm?`<span class="en">${esc(c.name_en)}</span>`:''}</div>
   <div class="s">${esc([c.title_zh||c.title_en,c.company_zh||c.company_en].filter(Boolean).join(' · '))}</div>
   ${(c.tags||[]).length?`<div class="tg">${c.tags.map(t=>`<span class="chip ${tagCls(t)}">${esc(t)}</span>`).join('')}</div>`:''}</div>
@@ -594,8 +621,8 @@ const cur=()=>byId(edId);
 function folderOpts(sel){sel.innerHTML=`<option value="">${T('uncat')}</option>`+S.folders.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('')+`<option value="__add">＋ ${T('newFolder').replace(/（.*|\s\(.*/,'')}…</option>`}
 function openEd(id){
   const c=byId(id);if(!c)return;edId=id;
-  $('#eImg').src=c.img||'';
-  $('#eBack').hidden=!c.imgBack;$('#eBack').src=c.imgBack||'';
+  $('#eImg').src=c.thumb||'';$('#eBack').hidden=true;$('#eBack').removeAttribute('src');
+  getImgs(id).then(m=>{if(edId!==id)return;if(m.img)$('#eImg').src=m.img;if(m.imgBack){$('#eBack').src=m.imgBack;$('#eBack').hidden=false}});
   folderOpts($('#eFolder'));
   $('#eCountry').innerHTML=`<option value="">${T('country')}…</option>`+CTRY.map(o=>`<option value="${o.c}">${flag(o.c)} ${S.lang==='en'?o.en:o.zh+' '+o.en}</option>`).join('')+(c.country&&!CTRY.find(o=>o.c===c.country)?`<option value="${esc(c.country)}">${flag(c.country)} ${esc(c.country)}</option>`:'');
   $$('#ed [data-k]').forEach(el=>{el.value=c[el.dataset.k]||'';el.classList.toggle('tr',(c.tr||[]).includes(el.dataset.k))});
@@ -627,7 +654,7 @@ async function edDone(){const c=cur();c.status='ok';await putCard(c);const n=nex
 function reviewNext(){const pend=CARDS.filter(x=>x.status==='new').sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));if(pend[0])openEd(pend[0].id)}
 async function delCur(){const c=cur();if(!c||!confirm(T('cDel')))return;const n=nextPending();await rmCard(c.id);CARDS.forEach(x=>{if(x.dup===c.id)x.dup=''});toast(T('deleted'));if(n&&c.status==='new')openEd(n.id);else closeEd();renderQ()}
 function dial(k){const c=cur();const v=(c[k]||'').split('/')[0].replace(/[^\d+]/g,'');if(!v)return toast(T('noPhone'));location.href='tel:'+v}
-function viewImg(k){const c=cur();if(!c||!c[k])return;const d=document.createElement('div');d.className='viewer';d.innerHTML=`<img src="${c[k]}">`;d.onclick=()=>d.remove();document.body.appendChild(d)}
+async function viewImg(k){const c=cur();if(!c)return;const m=await getImgs(c.id);const src=m[k]||(k==='img'?c.thumb:'');if(!src)return;const d=document.createElement('div');d.className='viewer';d.innerHTML=`<img src="${src}">`;d.onclick=()=>d.remove();document.body.appendChild(d)}
 function edMail(){
   flushSave();const c=cur();if(!c.email)return toast(T('noEmail'));
   const zh=['TW','CN','HK','MO'].includes(c.country)||(!c.country&&hasCJK(c.name_zh));
@@ -638,15 +665,15 @@ function edMail(){
 }
 $('#inBack').addEventListener('change',async e=>{
   const f=e.target.files[0];e.target.value='';const c=cur();if(!f||!c)return;
-  try{const p=await prep(f);c.imgBack=p.thumb;$('#eBack').src=p.thumb;$('#eBack').hidden=false;await putCard(c);
-    toast(T('working'),4000);const d=await callAI([c.img,p.big]);
+  try{const p=await prep(f);const m=await getImgs(c.id);await putImgs(c.id,{img:m.img||'',imgBack:p.view});c.hasBack=true;$('#eBack').src=p.view;$('#eBack').hidden=false;await putCard(c);
+    toast(T('working'),4000);const d=await callAI([m.img||c.thumb,p.big]);
     if(edId===c.id){flushSave()}applyAI(c,d,true);await putCard(c);if(edId===c.id)openEd(c.id);toast(T('backMerged'))}
   catch(err){toast(err.message||String(err),3500)}
 });
 async function rescan(){
-  flushSave();const c=cur();if(!c||!c.img)return toast(T('noImg'));
+  flushSave();const c=cur();if(!c)return;const m=await getImgs(c.id);if(!m.img)return toast(T('noImg'));
   toast(T('working'),4000);
-  try{const d=await callAI([c.img,c.imgBack]);applyAI(c,d,false);c.dup=findDup(c);await putCard(c);if(edId===c.id)openEd(c.id);toast(T('rescanDone'))}
+  try{const d=await callAI([m.img,m.imgBack]);applyAI(c,d,false);c.dup=findDup(c);await putCard(c);if(edId===c.id)openEd(c.id);toast(T('rescanDone'))}
   catch(err){toast(err.message||String(err),3500)}
 }
 
@@ -787,14 +814,14 @@ async function delTag(t){if(!confirm(T('cDelTag',{n:t})))return;S.tags=S.tags.fi
   for(const c of CARDS)if((c.tags||[]).includes(t)){c.tags=c.tags.filter(x=>x!==t);await putCard(c)}renderSet();renderBatch()}
 async function delFolder(f){if(!confirm(T('cDelFol',{n:f})))return;S.folders=S.folders.filter(x=>x!==f);if(S.bFolder===f)S.bFolder='';saveS();
   for(const c of CARDS)if(c.folder===f){c.folder='';await putCard(c)}renderSet();renderBatch()}
-function backup(){const data=JSON.stringify({app:'card-scanner',v:2,exportedAt:new Date().toISOString(),settings:{tags:S.tags,folders:S.folders},cards:CARDS});
+async function backup(){const im={};if(db)for(const r of (await idb('readonly',s=>s.getAll(),'imgs'))||[])im[r.id]=r;const data=JSON.stringify({app:'card-scanner',v:3,exportedAt:new Date().toISOString(),settings:{tags:S.tags,folders:S.folders},cards:CARDS.map(c=>Object.assign({},c,{img:(im[c.id]||{}).img||'',imgBack:(im[c.id]||{}).imgBack||''}))});
   deliver(new Blob([data],{type:'application/json'}),`名片備份_${today()}.json`)}
 $('#inRestore').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
   try{const j=JSON.parse(await f.text());const arr=Array.isArray(j)?j:j.cards||[];let n=0;
     if(j.settings){for(const t of j.settings.tags||[])if(!S.tags.includes(t))S.tags.push(t);for(const t of j.settings.folders||[])if(!S.folders.includes(t))S.folders.push(t);saveS()}
-    for(const o of arr){if(!o||!o.id)continue;await putCard(Object.assign(blank(),o));n++}
+    for(const o of arr){if(!o||!o.id)continue;const c=Object.assign(blank(),o);const img=c.img||c.image||'',bk=c.imgBack||'';delete c.img;delete c.imgBack;delete c.image;if(img||bk){await putImgs(c.id,{img,imgBack:bk});c.hasBack=!!bk;if(!c.thumb)c.thumb=await miniFrom(img)}await putCard(c);n++}
     toast(T('restored',{n}));refresh();renderSet()}catch(err){toast('✗ '+err.message)}});
-async function clearAll(){if(!confirm(T('cClear')))return;CARDS=[];if(db)await idb('readwrite',s=>s.clear());try{localStorage.removeItem('cv_cards')}catch(e){}Q.length=0;refresh();renderSet();renderQ()}
+async function clearAll(){if(!confirm(T('cClear')))return;CARDS=[];if(db){await idb('readwrite',s=>s.clear());await idb('readwrite',s=>s.clear(),'imgs')}try{localStorage.removeItem('cv_cards')}catch(e){}Q.length=0;refresh();renderSet();renderQ()}
 
 // ───────── batch bar ─────────
 function renderBatch(){
@@ -834,6 +861,7 @@ window.addEventListener('beforeunload',e=>{if(Q.some(j=>['prep','wait','run'].in
   try{await openDB();CARDS=(await idb('readonly',s=>s.getAll()))||[]}catch(e){console.warn('IndexedDB unavailable',e)}
   try{await migrateOld()}catch(e){console.warn(e)}
   refresh();
+  setTimeout(()=>splitOld().catch(e=>console.warn(e)),300);
 })();
 </script>
 </body>
